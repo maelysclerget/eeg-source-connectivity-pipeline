@@ -1,0 +1,3 @@
+41Y01 1 task surface eLORETA 20.0
+41Y01 1 task volume eLORETA 20.0
+41Y01 1 task mixed eLORETA 20.0

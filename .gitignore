@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Data and generated outputs
+data/
+derivatives/
+results/
+outputs/
+figures/
+
+# EEG, MRI and scientific data
+*.fif
+*.edf
+*.bdf
+*.set
+*.stc
+*.nii
+*.nii.gz
+*.mgz
+*.mat
+*.csv
+
+# Credentials and environment variables
+.env
+*.key
+credentials*
+secrets*
