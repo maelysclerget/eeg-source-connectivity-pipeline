@@ -34,12 +34,14 @@ do
     # Expected output file
     OUTPUT_FILE="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/personalized_montage/${SUB}_ses${SES}_personalized_montage.fif"
 
-    # Skip already processed files
-    if [ -f "$OUTPUT_FILE" ]; then
-        echo "Skipping already processed: sub-$SUB ses-$SES task-$TASK" 
-    else
-        echo "$SUB $SES $TASK" >> "$PARAM_LIST" # if you want to process already exisitng files, keep this line only and change python script
-    fi
+    ## Skip already processed files
+    #if [ -f "$OUTPUT_FILE" ]; then
+    #    echo "Skipping already processed: sub-$SUB ses-$SES task-$TASK" 
+    #else
+    #    echo "$SUB $SES $TASK" >> "$PARAM_LIST" # if you want to process already exisitng files, keep this line only and change python script
+    #fi
+
+    echo "$SUB $SES $TASK" >> "$PARAM_LIST"
 done
 
 # Count how many jobs we found
