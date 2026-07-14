@@ -10,7 +10,7 @@ RAW_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_connectivity.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code//07_run_EEG_connectivity.sh"
+RUN_SCRIPT="/home/clerget/Scripts/code/07_run_EEG_connectivity.sh"
 
 # Choose source space and inverse methods here.
 MODES=("surface" "volume" "mixed")

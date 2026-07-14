@@ -12,16 +12,16 @@ DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs" #Specific log directory for this step .err are the errors and .out are the outputs of the scirpt, they are upfated live during the time that the job is running.
 
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_bem.txt"
-RUN_SCRIPT="/work/uphummel/studies/tTIS-EEG/code/Maelys/05_run_EEG_montage_BEM.sh"
+RUN_SCRIPT="/home/clerget/Scripts/code/05_run_EEG_montage_BEM.sh"
 
 mkdir -p "$LOG_DIR"
 
 # Empty the parameter list before rebuilding it
 > "$PARAM_LIST"
 
-echo "Scanning $DATA_ROOT for task-task EEG files..." # <--- change filename here !!
+echo "Scanning $DATA_ROOT for task-RSpre EEG files..." # <--- change filename here !!
 
-find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-task_eeg.vhdr" | sort | while read -r FILE # <--- and here !! 
+find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg.vhdr" | sort | while read -r FILE # <--- and here !! 
 
 do
     BASENAME=$(basename "$FILE")
