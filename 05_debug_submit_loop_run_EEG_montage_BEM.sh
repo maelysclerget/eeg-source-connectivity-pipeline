@@ -23,7 +23,7 @@ mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
 # ---- ONE TEST SUBJECT ----
-SUB="41Y03"
+SUB="42Y01"
 SES="1"
 TASK="RSpre"
 

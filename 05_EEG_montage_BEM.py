@@ -411,7 +411,7 @@ def process_file(input_path):
         personalize_montage(fif_path=input_file, subject=subject, ses=session)
 
         if str(session) == "1":
-            make_scalp_surfaces(subject)
+            make_scalp_surfaces(subject, overwrite=True)
             make_bem_watershed(subject)
         else:
             print(

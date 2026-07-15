@@ -385,7 +385,7 @@ def scalp_surfaces_exist(subject: str, subjects_dir: str | Path) -> bool:
 def make_scalp_surfaces(
     subject: str,
     subjects_dir: str | Path | None = None,
-    overwrite: bool = False,
+    overwrite: bool = True,
     no_decimate: bool = True,
 ) -> list[Path]:
     """
