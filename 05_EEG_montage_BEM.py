@@ -269,7 +269,6 @@ def personalize_montage(
     # Save fif with personalized montage
     save_path = output_folder/ f"{subject}_ses{ses}_personalized_montage.fif"
     raw_subset.save(save_path, overwrite=True)
-    os.chmod(save_path, 0o770)
     print(f"Saved personalized montage FIF to {save_path}")
     
     return raw_subset
@@ -299,7 +298,6 @@ def make_scalp_surfaces(subject: str, overwrite: bool = False, no_decimate: bool
 
     if not bem_dir.exists():
         bem_dir.mkdir(parents=True, exist_ok=True)
-        os.chmod(bem_dir, 0o2770)
         
     # Skip if already exists
     if not overwrite and any(bem_dir.glob("*head-*.fif")): # if not overwrite and any(bem_dir.glob(f"{subject}_*_scalp.surf")):
@@ -351,7 +349,6 @@ def make_bem_watershed(
     watershed_dir = output_folder / "watershed"
 
     output_folder.mkdir(parents=True, exist_ok=True)
-    os.chmod(output_folder, 0o2770)
     
     
     required_surfaces = [
@@ -407,8 +404,14 @@ def process_file(input_path):
 
         personalize_montage(fif_path=input_file, subject=subject, ses=session)
 
-        make_scalp_surfaces(subject)
-        make_bem_watershed(subject)
+        if str(session) == "1":
+            make_scalp_surfaces(subject)
+            make_bem_watershed(subject)
+        else:
+            print(
+                f"Skipping BEM creation for sub-{subject} ses-{session}; "
+                "BEM is shared across sessions and is created from ses-1."
+            )
 
     except Exception as err:
         print(f"Error processing file {input_file}")
@@ -462,7 +465,7 @@ if __name__ == "__main__":
         raise RuntimeError(f"Directory not found: {input_dir}")
 
     # Representative preprocessed FIF
-    fif_path = sorted(input_dir.glob(f"sub-{subject}_ses-{session}_task-{task}_eeg_final_preprocessed_eeg_not_interpolated.fif"))
+    fif_path = sorted(input_dir.glob(f"sub-{subject}_ses-{session}_task-{task}_eeg_final_preprocessed_raw_source_level.fif"))
 
     print(
         f"Found {len(fif_path)} EEG files "
