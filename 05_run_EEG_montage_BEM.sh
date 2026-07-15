@@ -60,7 +60,7 @@ apptainer exec \
     bash -lc '
         export FREESURFER_HOME=/usr/local/freesurfer/8.1.0-1
 
-        cd /work/uphummel/studies/tTIS-EEG/code/Maelys/
+        cd /home/clerget/Scripts/code
 
         echo "FREESURFER_HOME=$FREESURFER_HOME"
         echo "SUBJECTS_DIR=$SUBJECTS_DIR"
