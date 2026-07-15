@@ -299,10 +299,16 @@ def make_scalp_surfaces(subject: str, overwrite: bool = False, no_decimate: bool
     if not bem_dir.exists():
         bem_dir.mkdir(parents=True, exist_ok=True)
         
-    # Skip if already exists
-    if not overwrite and any(bem_dir.glob("*head-*.fif")): # if not overwrite and any(bem_dir.glob(f"{subject}_*_scalp.surf")):
+    # Skip only when all scalp surface resolutions already exist.
+    required_head_surfaces = [
+        bem_dir / f"sub-{subject}_ses-baseline-head-dense.fif",
+        bem_dir / f"sub-{subject}_ses-baseline-head-medium.fif",
+        bem_dir / f"sub-{subject}_ses-baseline-head-sparse.fif",
+    ]
+
+    if not overwrite and all(p.exists() for p in required_head_surfaces):
         print(f"Scalp surfaces already exist for {subject}. Skipping.")
-        return []
+        return required_head_surfaces
 
     print(
         f"Creating scalp surfaces for {subject} (overwrite={overwrite}, "
