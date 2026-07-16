@@ -160,19 +160,44 @@ def plot_noise_covariance(noise_cov: mne.Covariance, info: mne.Info, plot_dir: P
     plot_dir.mkdir(parents=True, exist_ok=True)
     print("Saving EEG noise covariance matrix plots.")
 
-    figures = noise_cov.plot(info, proj=True, show=False)
-    if not isinstance(figures, (tuple, list)):
-        figures = [figures]
+    cov_data = np.asarray(noise_cov.data)
+    if cov_data.ndim == 1:
+        cov_data = np.diag(cov_data)
 
-    suffixes = ["covariance", "eigenvalues"]
-    for idx, fig in enumerate(figures):
-        suffix = suffixes[idx] if idx < len(suffixes) else f"diagnostic_{idx + 1}"
-        fig.savefig(
-            plot_dir / f"{base_tag}_{suffix}.png",
-            dpi=300,
-            bbox_inches="tight",
-        )
-        plt.close(fig)
+    channel_names = list(noise_cov.names)
+    if not channel_names:
+        channel_names = list(info["ch_names"])[: cov_data.shape[0]]
+
+    n_channels = len(channel_names)
+    fig_size = max(8, n_channels * 0.18)
+    fig, ax = plt.subplots(figsize=(fig_size, fig_size), constrained_layout=True)
+    im = ax.imshow(cov_data, cmap="RdBu_r", aspect="equal")
+    ax.set_title("EEG covariance")
+    ax.set_xticks(np.arange(n_channels))
+    ax.set_yticks(np.arange(n_channels))
+    ax.set_xticklabels(channel_names, rotation=90, fontsize=5)
+    ax.set_yticklabels(channel_names, fontsize=5)
+    ax.tick_params(axis="both", length=0)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    fig.savefig(
+        plot_dir / f"{base_tag}_covariance.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.close(fig)
+
+    eigvals = np.linalg.eigvalsh(cov_data)
+    fig, ax = plt.subplots(figsize=(8, 4), constrained_layout=True)
+    ax.plot(np.arange(1, len(eigvals) + 1), np.sort(eigvals)[::-1], marker=".")
+    ax.set_title("EEG covariance eigenvalues")
+    ax.set_xlabel("Eigenvalue rank")
+    ax.set_ylabel("Eigenvalue")
+    fig.savefig(
+        plot_dir / f"{base_tag}_eigenvalues.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.close(fig)
 
 # Takes the source reconstruction result and saves it as ROI-level time courses.
 def save_roi_time_courses(stc, fwd, mode: str, subject_fs: str, subjects_dir: Path, out_dir: Path, base_tag: str) -> None:
