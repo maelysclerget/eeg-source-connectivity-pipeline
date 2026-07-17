@@ -22,7 +22,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
-from mne.io.constants import FIFF
 
 from utils06 import (
     create_bem_solution,
@@ -373,7 +372,9 @@ def save_full_stc(stc, out_dir: Path, base_tag: str, mode: str) -> None:
         stc_path = out_dir / f"{base_tag}_stc.h5"
         stc.save(stc_path, ftype="h5", overwrite=True)
 
-    chmod_group(stc_path)
+    for saved_file in out_dir.glob(f"{base_tag}_stc*"):
+        chmod_group(saved_file)
+        
     print(f"Saved STC to {stc_path}")
 
 
@@ -434,13 +435,6 @@ def process_inverse_solution(args: argparse.Namespace) -> None:
             fwd_path = out_dir / f"{base_tag}-fwd.fif"
             mne.write_forward_solution(fwd_path, fwd, overwrite=True)
             chmod_group(fwd_path)
-
-            if not args.skip_diagnostics:
-                plot_forward_maps(fwd, mode, plot_dir, base_tag)
-
-            cov_path = out_dir / f"{base_tag}-cov.fif"
-            mne.write_cov(cov_path, noise_cov, overwrite=True)
-            chmod_group(cov_path)
 
             if not args.skip_diagnostics:
                 plot_forward_maps(fwd, mode, plot_dir, base_tag)

@@ -15,14 +15,12 @@ Notes:
   that loops over subjects / sessions / blocks.
 """
 
+import csv
+import logging
+from pathlib import Path
+
 import mne
 import numpy as np
-import csv
-from pathlib import Path
-import logging
-from copy import deepcopy
-import os.path as op
-import nibabel as nib
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -55,12 +53,17 @@ def create_striatum_volume_source_space(subject, subjects_dir, bem=None, pos=5.0
     aseg = f"{subjects_dir}/{subject}/mri/aseg.mgz"
 
     all_labels = mne.get_volume_labels_from_aseg(aseg)
-    # uncomment to look at the aseg labels and select the labels of the desired deep brain regions (based on the labels, we can select the STRIATUM_LABELS to consider)
-    # print("Available volume labels in aseg:", all_labels)
-    # raise SystemExit("Debug stop: inspect the labels above.")
     labels_vol = [lab for lab in all_labels if lab in STRIATUM_LABELS]
+    missing_labels = [lab for lab in STRIATUM_LABELS if lab not in labels_vol]
+
+    if missing_labels:
+        raise ValueError(
+            f"Missing expected striatum labels in {aseg}: {missing_labels}. "
+            f"Available labels include: {all_labels}"
+        )
+
     logger.info(f"Using striatal structures: {labels_vol}")
-    print(f"🕒 Creating volume source space for striatum structures: {labels_vol}")
+    print(f"Creating volume source space for striatum structures: {labels_vol}")
     src = mne.setup_volume_source_space(
         subject=subject,
         mri=aseg,
@@ -246,17 +249,6 @@ def create_inverse_operator(info, fwd, noise_cov, mode):
         )
     logger.info("Inverse operator created.")
     return inv
-
-# APPLY INVERSE operator to find the source time courses (STC)
-def compute_stc(raw, inverse_operator, lambda2, method):
-    stc = mne.minimum_norm.apply_inverse_raw(
-        raw,
-        inverse_operator,
-        lambda2=lambda2, 
-        method=method
-    )
-    logger.info("STC computed.")
-    return stc
 
 
 # MORPHING
