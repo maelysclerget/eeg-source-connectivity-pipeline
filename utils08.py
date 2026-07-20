@@ -87,20 +87,17 @@ def _pair_task_blocks(s15_events, s10_events, s8_events, sfreq):
 
 
 def _make_interval_epochs(raw_labels, intervals, event_name, event_id, sfreq):
-    """Create one epoch per interval, requiring equal interval durations."""
+    """Create one epoch per interval, truncated to the shortest interval."""
     durations = np.array([stop - start for start, stop in intervals], dtype=int)
     if np.any(durations <= 0):
         raise ValueError(f"{event_name} contains an empty or negative interval.")
+    duration = int(np.min(durations))
     if len(set(durations)) != 1:
         durations_seconds = [duration / sfreq for duration in durations]
-        raise ValueError(
-            f"{event_name} intervals have different durations: {durations_seconds}. "
-            "MNE Epochs require equal-length intervals."
-        )
+        print(f"{event_name} intervals have different durations: {durations_seconds}. Using shortest duration: {duration / sfreq:.3f} s.")
 
     epoch_events = np.column_stack([[start for start, _ in intervals], np.zeros(len(intervals), dtype=int), np.full(len(intervals), event_id, dtype=int)]) #[sample_number, previous_event_value, event_id]
     
-    duration = int(durations[0])
     return mne.Epochs(
         raw_labels,
         events=epoch_events,

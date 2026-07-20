@@ -34,7 +34,7 @@ subject = "41Y01"
 session = "1"
 task = "task"
 mode = "surface"
-method = "eLORETA"
+method = "MNE"
 cov_label = "15"
 labels_fif = None
 
