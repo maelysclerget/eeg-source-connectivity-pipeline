@@ -82,7 +82,8 @@ def default_labels_fif_path(args: argparse.Namespace) -> Path:
     if args.task.lower() == "task":
         if not args.cov_label:
             raise ValueError("task epoching needs --cov-label, e.g. 15.")
-        return inverse_dir / "task" / f"covs{args.cov_label}" / f"{base_tag}_cov-s{args.cov_label}_labels.fif"
+        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
+        return inverse_dir / f"cov-{cov_tag}" / f"{base_tag}_cov-{cov_tag}_labels.fif"
 
     return inverse_dir / args.task / f"{base_tag}_labels.fif"
 

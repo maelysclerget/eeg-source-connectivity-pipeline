@@ -34,7 +34,8 @@ def base_tag(args: argparse.Namespace) -> str:
     if args.task.lower() == "task":
         if not args.cov_label:
             raise ValueError("task connectivity needs --cov-label, for example 15.")
-        tag = f"{tag}_cov-s{args.cov_label}"
+        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
+        tag = f"{tag}_cov-{cov_tag}"
 
     return tag
 
@@ -54,7 +55,8 @@ def inverse_directory(args: argparse.Namespace) -> Path:
     if args.task.lower() == "task":
         if not args.cov_label:
             raise ValueError("task connectivity needs --cov-label, for example 15.")
-        return directory / "task" / f"covs{args.cov_label}"
+        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
+        return directory / f"cov-{cov_tag}"
 
     return directory / args.task
 
@@ -77,7 +79,8 @@ def output_directory(args: argparse.Namespace) -> Path:
     if args.task.lower() == "task":
         if not args.cov_label:
             raise ValueError("task connectivity needs --cov-label, for example 15.")
-        return directory / "task" / f"covs{args.cov_label}"
+        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
+        return directory / f"cov-{cov_tag}"
 
     return directory / args.task
 
