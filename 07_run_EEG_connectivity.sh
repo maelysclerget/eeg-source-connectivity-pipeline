@@ -26,7 +26,7 @@ if [ -z "$CURRENT_FILE" ]; then
     exit 1
 fi
 
-read -r SUB SES TASK MODE METHOD COV_LABEL <<< "$CURRENT_FILE"
+read -r SUB SES TASK MODE METHOD COV_LABEL BASELINE_KIND <<< "$CURRENT_FILE"
 
 if [ -z "$MODE" ]; then
     MODE="surface"
@@ -40,12 +40,17 @@ if [ -z "$COV_LABEL" ]; then
     COV_LABEL="15"
 fi
 
+if [ -z "$BASELINE_KIND" ]; then
+    BASELINE_KIND="baseline_stim"
+fi
+
 echo "SUB = '$SUB'"
 echo "SES = '$SES'"
 echo "TASK = '$TASK'"
 echo "MODE = '$MODE'"
 echo "METHOD = '$METHOD'"
 echo "COV_LABEL = '$COV_LABEL'"
+echo "BASELINE_KIND = '$BASELINE_KIND'"
 echo "Processing source EEG connectivity for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
 
 MNE_FS_IMG="/work/uphummel/shared/software/containers/mne_freesurfer/mne_freesurfer_8.1.sif"
@@ -73,5 +78,6 @@ apptainer exec \
             --task "'"$TASK"'" \
             --mode "'"$MODE"'" \
             --method "'"$METHOD"'" \
-            --cov-label "'"$COV_LABEL"'"
+            --cov-label "'"$COV_LABEL"'" \
+            --baseline-kind "'"$BASELINE_KIND"'"
     '

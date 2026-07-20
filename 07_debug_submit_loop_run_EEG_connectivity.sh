@@ -11,12 +11,15 @@ mkdir -p "$LOG_DIR"
 # ---- ONE TEST SUBJECT ----
 SUB="41Y01"
 SES="1"
-TASK="RSpre"
-MODE="surface"
+TASK="task"
+MODES=("surface" "volume" "mixed")
 METHOD="eLORETA"
 COV_LABEL="15"
+BASELINE_KIND="baseline_stim"
 
-echo "$SUB $SES $TASK $MODE $METHOD $COV_LABEL" >> "$PARAM_LIST"
+for MODE in "${MODES[@]}"; do
+    echo "$SUB $SES $TASK $MODE $METHOD $COV_LABEL $BASELINE_KIND" >> "$PARAM_LIST"
+done
 
 echo "Added test source-connectivity job:"
 cat "$PARAM_LIST"
