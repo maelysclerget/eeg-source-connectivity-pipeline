@@ -301,11 +301,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n-epochs-per-block", type=int, default=None, help="Task nonbaseline epochs per block. Default: infer from the epoch files.")
     parser.add_argument(
         "--baseline-kind",
-        choices=("baseline", "baseline_stim", "baseline_no_stim"),
-        default="baseline",
+        choices=("baseline_stim", "baseline_no_stim", "baseline"),
+        default="baseline_stim",
         help=(
-            "Task baseline epochs file to use. baseline uses the compatibility file, "
-            "baseline_stim uses S15-S10, and baseline_no_stim uses S15-20s to S15."
+            "Task baseline epochs file to use. baseline_stim uses S15-S10, "
+            "baseline_no_stim uses S15-20s to S15, and baseline uses the compatibility file."
         ),
     )
     return parser.parse_args()
