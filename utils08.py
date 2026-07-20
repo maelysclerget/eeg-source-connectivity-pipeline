@@ -59,20 +59,22 @@ def _sample_to_time(sample, sfreq):
 
 
 def _pair_task_blocks(s4_events, s15_events, s10_events, s8_events, sfreq):
-    """Pair task blocks as S4 -> first S15 -> first S10 -> S8."""
-    if len(s4_events) != len(s8_events) or len(s4_events) != len(s15_events):
-        raise ValueError(
-            f"Expected the same number of S4, S15, and S8 events, got "
-            f"{len(s4_events)} S4, {len(s15_events)} S15, and {len(s8_events)} S8."
-        )
+    """Pair task blocks as latest S4 before S15 -> S15 -> first S10 -> S8."""
+    print(f"Event counts for task pairing: {len(s4_events)} S4, {len(s15_events)} S15, {len(s10_events)} S10, {len(s8_events)} S8.")
+    if len(s15_events) != len(s8_events):
+        raise ValueError(f"Expected the same number of S15 and S8 events, got {len(s15_events)} S15 and {len(s8_events)} S8.")
 
     blocks = []
+    s4_samples = s4_events[:, 0].astype(int)
 
     # 1st value of block index is start=1
-    for block_index, s4_event in enumerate(s4_events, start=1):
-        s4_sample = int(s4_event[0]) # 1st column of s4 events 
-        s15_sample = int(s15_events[block_index - 1, 0])
+    for block_index, s15_event in enumerate(s15_events, start=1):
+        s15_sample = int(s15_event[0])
         s8_sample = int(s8_events[block_index - 1, 0])
+        s4_before_s15 = s4_samples[s4_samples < s15_sample]
+        if len(s4_before_s15) == 0:
+            raise ValueError(f"Could not find S4 before S15 for block {block_index}: S15={_sample_to_time(s15_sample, sfreq):.3f} s.")
+        s4_sample = int(s4_before_s15[-1]) # latest S4 before this S15
         if not (s4_sample < s15_sample < s8_sample):
             raise ValueError(f"Expected S4 < S15 < S8 for block {block_index}: S4={_sample_to_time(s4_sample, sfreq):.3f} s, S15={_sample_to_time(s15_sample, sfreq):.3f} s, S8={_sample_to_time(s8_sample, sfreq):.3f} s.")
 
