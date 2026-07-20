@@ -56,7 +56,7 @@ def get_raw_fif_path(args: argparse.Namespace) -> Path:
         / args.task
         / (
             f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
-            "_eeg_final_preprocessed_eeg_not_interpolated.fif"
+            "_eeg_not_interpolated_final_preprocessed_eeg.fif"
         )
     )
 
@@ -134,11 +134,13 @@ def process_label_epochs(args: argparse.Namespace) -> None:
     raw_labels = labels_evoked_to_raw(evoked, annotations=annotations)
 
     if task_lower == "task":
-        baseline_epochs, nonbaseline_epochs = make_task_epochs(
+        baseline_no_stim_epochs, baseline_stim_epochs, nonbaseline_epochs = make_task_epochs(
             raw_labels,
-            annotation_name=args.annotation,
             epoch_duration=args.epoch_duration,
             n_epochs_per_block=args.n_epochs_per_block,
+            block_open_annotation=args.block_open_annotation,
+            no_stim_end_annotation=args.no_stim_end_annotation,
+            stim_start_annotation=args.stim_start_annotation,
             block_start_annotation=args.block_start_annotation,
             block_end_annotation=args.block_end_annotation,
         )
@@ -152,6 +154,14 @@ def process_label_epochs(args: argparse.Namespace) -> None:
     stem = labels_path.stem
     baseline_path = out_dir / f"{stem}_baseline-epo.fif"
     nonbaseline_path = out_dir / f"{stem}_nonbaseline-epo.fif"
+    if task_lower == "task":
+        baseline_no_stim_path = out_dir / f"{stem}_baseline_no_stim-epo.fif"
+        baseline_stim_path = out_dir / f"{stem}_baseline_stim-epo.fif"
+        save_epochs(baseline_no_stim_epochs, baseline_no_stim_path)
+        save_epochs(baseline_stim_epochs, baseline_stim_path)
+        baseline_epochs = baseline_stim_epochs if args.connectivity_baseline == "stim" else baseline_no_stim_epochs
+        print(f"Saving {args.connectivity_baseline} baseline as compatibility file: {baseline_path}")
+
     save_epochs(baseline_epochs, baseline_path)
     save_epochs(nonbaseline_epochs, nonbaseline_path)
 
@@ -169,33 +179,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cov-label", default=cov_label, help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: labels_fif/../epochs.")
-    parser.add_argument("--annotation", default="Stimulus/S 15", help="Task annotation used for each block baseline epoch.")
-    parser.add_argument(
-        "--block-start-annotation",
-        default="Stimulus/S 10",
-        help="Task annotation used as block start for non-baseline epochs.",
-    )
-    parser.add_argument(
-        "--block-end-annotation",
-        default="Stimulus/S  8",
-        help="Task annotation used as block end for non-baseline epochs.",
-    )
+    parser.add_argument("--block-open-annotation", default="Stimulus/S  4", help="Task annotation used as the beginning of the no-stimulation baseline.")
+    parser.add_argument("--no-stim-end-annotation", default="Stimulus/S 15", help="Task annotation used as the end of no-stimulation baseline.")
+    parser.add_argument("--stim-start-annotation", default="Stimulus/S 15", help="Task annotation used as the beginning of stimulation baseline.")
+    parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task annotation used as block start for non-baseline epochs.")
+    parser.add_argument("--block-end-annotation", default="Stimulus/S  8", help="Task annotation used as block end for non-baseline epochs.")
     parser.add_argument("--epoch-duration", type=float, default=5.0, help="Non-baseline epoch duration in seconds.")
-    parser.add_argument(
-        "--n-epochs-per-block",
-        type=int,
-        default=None,
-        help=(
-            "For task data, optional maximum number of 5 s epochs kept from each S10-to-S8 block. "
-            "Default: keep all complete epochs in each block."
-        ),
-    )
-    parser.add_argument(
-        "--rspre-baseline-duration",
-        type=float,
-        default=20.0,
-        help="For RSpre, duration in seconds of the first-recording baseline epoch.",
-    )
+    parser.add_argument("--connectivity-baseline", choices=("stim", "no_stim"), default="stim", help="For task data, which baseline to also save as *_baseline-epo.fif for connectivity compatibility.")
+    parser.add_argument("--n-epochs-per-block", type=int, default=None, help="For task data, optional maximum number of 5 s epochs kept from each S10-to-S8 block. Default: keep all complete epochs in each block.")
+    parser.add_argument("--rspre-baseline-duration", type=float, default=20.0, help="For RSpre, duration in seconds of the first-recording baseline epoch.")
     return parser.parse_args()
 
 

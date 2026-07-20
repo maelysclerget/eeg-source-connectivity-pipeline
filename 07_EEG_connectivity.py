@@ -104,7 +104,8 @@ def process_connectivity(args: argparse.Namespace) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     os.chmod(out_dir, 0o2770)
 
-    baseline_data, roi_names, sfreq, baseline_source = load_roi_epochs(args, "baseline")
+    baseline_kind = args.baseline_kind if args.task.lower() == "task" else "baseline"
+    baseline_data, roi_names, sfreq, baseline_source = load_roi_epochs(args, baseline_kind)
     nonbaseline_data, nonbaseline_roi_names, nonbaseline_sfreq, nonbaseline_source = load_roi_epochs(args, "nonbaseline")
     if roi_names != nonbaseline_roi_names:
         raise ValueError("Baseline and nonbaseline ROI names do not match.")
@@ -296,6 +297,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bands", nargs="+", choices=list(BANDS), default=None, help="Bands to compute. Default: all.")
     parser.add_argument("--connectivity-method", default="imcoh", help="Connectivity method. Default: imcoh.")
     parser.add_argument("--n-epochs-per-block", type=int, default=19, help="Task nonbaseline epochs per S15 block. Default: 19.")
+    parser.add_argument(
+        "--baseline-kind",
+        choices=("baseline", "baseline_stim", "baseline_no_stim"),
+        default="baseline",
+        help=(
+            "Task baseline epochs file to use. baseline uses the compatibility file, "
+            "baseline_stim uses S15-S10, and baseline_no_stim uses S4-S15."
+        ),
+    )
     return parser.parse_args()
 
 
