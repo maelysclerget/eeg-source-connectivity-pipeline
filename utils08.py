@@ -34,31 +34,75 @@ def labels_evoked_to_raw(evoked, annotations=None):
     return raw_labels
 
 
-def make_task_epochs(raw_labels, annotation_name="Stimulus/S 15", epoch_duration=5.0, n_epochs_per_block=19):
-    """Create task baseline and post-S15 epochs following 05_EEG_blocks_epochs.py."""
-    events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR") 
-    print("Event IDs found:", event_id)
-
+def _events_for_annotation(events, event_id, annotation_name):
+    """Return events matching one annotation description."""
     if annotation_name not in event_id:
         raise ValueError(
             f"Could not find annotation {annotation_name!r}. "
             f"Available annotations: {sorted(event_id)}"
         )
 
-    s15_id = event_id[annotation_name]
-    # events rows are [sample_number, previous_value, event_id].
-    # Keep only rows whose event_id corresponds to the S15 annotation.
-    s15_events = events[events[:, 2] == s15_id]
+    annotation_id = event_id[annotation_name]
+    annotation_events = events[events[:, 2] == annotation_id]
     print(f"{annotation_name} events:")
-    print(s15_events)
+    print(annotation_events)
 
-    if len(s15_events) == 0:
+    if len(annotation_events) == 0:
         raise ValueError(f"No events found for {annotation_name!r}.")
+
+    return annotation_events, annotation_id
+
+
+def _pair_block_events(start_events, end_events, sfreq):
+    """Pair each block start with the next block end."""
+    pairs = []
+    end_index = 0
+
+    for start_event in start_events:
+        start_sample = int(start_event[0])
+        while end_index < len(end_events) and int(end_events[end_index, 0]) <= start_sample:
+            end_index += 1
+
+        if end_index >= len(end_events):
+            raise ValueError(
+                "Could not pair every block start with a following block end. "
+                f"Unpaired start at {start_sample / sfreq:.3f} s."
+            )
+
+        end_sample = int(end_events[end_index, 0])
+        pairs.append((start_sample, end_sample))
+        end_index += 1
+
+    return pairs
+
+
+def make_task_epochs(
+    raw_labels,
+    annotation_name="Stimulus/S 15",
+    epoch_duration=5.0,
+    n_epochs_per_block=None,
+    block_start_annotation="Stimulus/S 10",
+    block_end_annotation="Stimulus/S  8",
+):
+    """Create task baseline epochs at S15 and task epochs from S10 to S8."""
+    events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR") 
+    print("Event IDs found:", event_id)
+
+    baseline_events, baseline_id = _events_for_annotation(events, event_id, annotation_name)
+    block_start_events, _ = _events_for_annotation(events, event_id, block_start_annotation)
+    block_end_events, _ = _events_for_annotation(events, event_id, block_end_annotation)
+
+    if len(baseline_events) != len(block_start_events):
+        raise ValueError(
+            "Task baseline and block-start annotation counts differ: "
+            f"{len(baseline_events)} {annotation_name!r} events, "
+            f"{len(block_start_events)} {block_start_annotation!r} events."
+        )
 
     baseline_epochs = mne.Epochs(
         raw_labels,
-        events=s15_events,  # contains all S15 events, so this creates one baseline epoch per S15
-        event_id={annotation_name: s15_id},
+        events=baseline_events,
+        event_id={annotation_name: baseline_id},
         tmin=-1.0,
         tmax=0.0,
         baseline=None,
@@ -69,26 +113,51 @@ def make_task_epochs(raw_labels, annotation_name="Stimulus/S 15", epoch_duration
         verbose="ERROR",
     )
 
-    nonbaseline_epochs_list = []
-    
     sfreq = raw_labels.info["sfreq"]
-    for s15_event in s15_events:  # loops over the 9 tasks blocks
-        start_time = s15_event[0] / sfreq
-        # Creates events every epoch duration
-        fixed_events = mne.make_fixed_length_events(
-            raw=raw_labels,
-            start=start_time,
-            duration=epoch_duration,
-            stop=start_time + epoch_duration * n_epochs_per_block,
-            id=5,
+    epoch_samples = int(round(epoch_duration * sfreq))
+    if epoch_samples <= 0:
+        raise ValueError(f"Epoch duration must be positive, got {epoch_duration}.")
+
+    block_pairs = _pair_block_events(block_start_events, block_end_events, sfreq)
+    nonbaseline_epochs_list = []
+    epochs_per_block = []
+
+    for block_index, (start_sample, end_sample) in enumerate(block_pairs, start=1):
+        if end_sample <= start_sample:
+            raise ValueError(
+                f"Block {block_index} end is not after start: "
+                f"{start_sample / sfreq:.3f}-{end_sample / sfreq:.3f} s."
+            )
+
+        event_samples = np.arange(start_sample, end_sample - epoch_samples + 1, epoch_samples, dtype=int)
+        if n_epochs_per_block is not None:
+            event_samples = event_samples[:n_epochs_per_block]
+
+        if len(event_samples) == 0:
+            raise ValueError(
+                f"No complete {epoch_duration:.3f} s epochs fit in block {block_index} "
+                f"from {start_sample / sfreq:.3f} to {end_sample / sfreq:.3f} s."
+            )
+
+        epochs_per_block.append(len(event_samples))
+        print(
+            f"Block {block_index}: {len(event_samples)} epochs from "
+            f"{start_sample / sfreq:.3f} to {end_sample / sfreq:.3f} s."
         )
-        # Create epochs for each block
+
+        fixed_events = np.column_stack(
+            [
+                event_samples,
+                np.zeros(len(event_samples), dtype=int),
+                np.full(len(event_samples), 5, dtype=int),
+            ]
+        )
         epochs_for_block = mne.Epochs(
             raw_labels,
             events=fixed_events,
             event_id={"Custom/5": 5},  # id=5
             tmin=0.0,
-            tmax=epoch_duration,
+            tmax=epoch_duration - 1.0 / sfreq,
             baseline=None,
             preload=True,
             reject=None,
@@ -97,6 +166,14 @@ def make_task_epochs(raw_labels, annotation_name="Stimulus/S 15", epoch_duration
             verbose="ERROR",
         )
         nonbaseline_epochs_list.append(epochs_for_block)
+
+    if len(set(epochs_per_block)) != 1:
+        raise ValueError(
+            "Blocks yielded different numbers of complete epochs. "
+            f"Epoch counts by block: {epochs_per_block}. "
+            "Use an equal S10-to-S8 duration per block or set --n-epochs-per-block "
+            "to truncate every block to the same count."
+        )
 
     nonbaseline_epochs = mne.concatenate_epochs(nonbaseline_epochs_list)
 

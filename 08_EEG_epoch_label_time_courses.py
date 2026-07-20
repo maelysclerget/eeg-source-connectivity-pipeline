@@ -138,6 +138,8 @@ def process_label_epochs(args: argparse.Namespace) -> None:
             annotation_name=args.annotation,
             epoch_duration=args.epoch_duration,
             n_epochs_per_block=args.n_epochs_per_block,
+            block_start_annotation=args.block_start_annotation,
+            block_end_annotation=args.block_end_annotation,
         )
     else:
         baseline_epochs, nonbaseline_epochs = make_rspre_epochs(
@@ -166,13 +168,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cov-label", default=cov_label, help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: labels_fif/../epochs.")
-    parser.add_argument("--annotation", default="Stimulus/S 15", help="Task annotation used as block onset.")
+    parser.add_argument("--annotation", default="Stimulus/S 15", help="Task annotation used for each block baseline epoch.")
+    parser.add_argument(
+        "--block-start-annotation",
+        default="Stimulus/S 10",
+        help="Task annotation used as block start for non-baseline epochs.",
+    )
+    parser.add_argument(
+        "--block-end-annotation",
+        default="Stimulus/S  8",
+        help="Task annotation used as block end for non-baseline epochs.",
+    )
     parser.add_argument("--epoch-duration", type=float, default=5.0, help="Non-baseline epoch duration in seconds.")
     parser.add_argument(
         "--n-epochs-per-block",
         type=int,
-        default=19,
-        help="For task data, number of 5 s epochs created after each S15 onset.",
+        default=None,
+        help=(
+            "For task data, optional maximum number of 5 s epochs kept from each S10-to-S8 block. "
+            "Default: keep all complete epochs in each block."
+        ),
     )
     parser.add_argument(
         "--rspre-baseline-duration",

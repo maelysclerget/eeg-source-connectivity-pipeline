@@ -43,7 +43,6 @@ FREESURFER_DIR = "/work/uphummel/studies/tTIS-EEG/derivatives/MRI/freesurfer"
 SOURCE_SPACE_MODES = ("surface", "volume", "mixed")
 
 
-
 def chmod_group(path: str | Path) -> None:
     """Keep cluster outputs group-readable/writable when possible."""
     try:
