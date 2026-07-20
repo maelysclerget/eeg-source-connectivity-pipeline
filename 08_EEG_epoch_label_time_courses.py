@@ -138,9 +138,7 @@ def process_label_epochs(args: argparse.Namespace) -> None:
             raw_labels,
             epoch_duration=args.epoch_duration,
             n_epochs_per_block=args.n_epochs_per_block,
-            block_open_annotation=args.block_open_annotation,
-            no_stim_end_annotation=args.no_stim_end_annotation,
-            stim_start_annotation=args.stim_start_annotation,
+            s15_annotation=args.s15_annotation,
             block_start_annotation=args.block_start_annotation,
             block_end_annotation=args.block_end_annotation,
         )
@@ -179,9 +177,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cov-label", default=cov_label, help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: labels_fif/../epochs.")
-    parser.add_argument("--block-open-annotation", default="Stimulus/S  4", help="Task annotation used as the beginning of the no-stimulation baseline.")
-    parser.add_argument("--no-stim-end-annotation", default="Stimulus/S 15", help="Task annotation used as the end of no-stimulation baseline.")
-    parser.add_argument("--stim-start-annotation", default="Stimulus/S 15", help="Task annotation used as the beginning of stimulation baseline.")
+    parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="Task S15 annotation used for S15-20s baseline and S15-to-S10 baseline.")
     parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task annotation used as block start for non-baseline epochs.")
     parser.add_argument("--block-end-annotation", default="Stimulus/S  8", help="Task annotation used as block end for non-baseline epochs.")
     parser.add_argument("--epoch-duration", type=float, default=5.0, help="Non-baseline epoch duration in seconds.")

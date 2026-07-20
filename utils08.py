@@ -58,31 +58,30 @@ def _sample_to_time(sample, sfreq):
     return int(sample) / sfreq
 
 
-def _pair_task_blocks(s4_events, s15_events, s10_events, s8_events, sfreq):
-    """Pair task blocks as latest S4 before S15 -> S15 -> first S10 -> S8."""
-    print(f"Event counts for task pairing: {len(s4_events)} S4, {len(s15_events)} S15, {len(s10_events)} S10, {len(s8_events)} S8.")
+def _pair_task_blocks(s15_events, s10_events, s8_events, sfreq):
+    """Pair task blocks as S15-20s -> S15 -> first S10 -> S8."""
+    print(f"Event counts for task pairing: {len(s15_events)} S15, {len(s10_events)} S10, {len(s8_events)} S8.")
     if len(s15_events) != len(s8_events):
         raise ValueError(f"Expected the same number of S15 and S8 events, got {len(s15_events)} S15 and {len(s8_events)} S8.")
 
     blocks = []
-    s4_samples = s4_events[:, 0].astype(int)
+    no_stim_samples = int(round(20.0 * sfreq))
 
     # 1st value of block index is start=1
     for block_index, s15_event in enumerate(s15_events, start=1):
         s15_sample = int(s15_event[0])
         s8_sample = int(s8_events[block_index - 1, 0])
-        s4_before_s15 = s4_samples[s4_samples < s15_sample]
-        if len(s4_before_s15) == 0:
-            raise ValueError(f"Could not find S4 before S15 for block {block_index}: S15={_sample_to_time(s15_sample, sfreq):.3f} s.")
-        s4_sample = int(s4_before_s15[-1]) # latest S4 before this S15
-        if not (s4_sample < s15_sample < s8_sample):
-            raise ValueError(f"Expected S4 < S15 < S8 for block {block_index}: S4={_sample_to_time(s4_sample, sfreq):.3f} s, S15={_sample_to_time(s15_sample, sfreq):.3f} s, S8={_sample_to_time(s8_sample, sfreq):.3f} s.")
+        no_stim_start_sample = s15_sample - no_stim_samples
+        if no_stim_start_sample < 0:
+            raise ValueError(f"Cannot create 20 s no-stim baseline before S15 for block {block_index}: S15={_sample_to_time(s15_sample, sfreq):.3f} s.")
+        if not (s15_sample < s8_sample):
+            raise ValueError(f"Expected S15 < S8 for block {block_index}: S15={_sample_to_time(s15_sample, sfreq):.3f} s, S8={_sample_to_time(s8_sample, sfreq):.3f} s.")
 
         s10_matches = s10_events[(s10_events[:, 0] > s15_sample) & (s10_events[:, 0] < s8_sample)]
         if len(s10_matches) == 0:
             raise ValueError(f"Could not find S10 between S15 at {_sample_to_time(s15_sample, sfreq):.3f} s and S8 at {_sample_to_time(s8_sample, sfreq):.3f} s.")
         s10_sample = int(s10_matches[0, 0]) # 1st row 1st column 
-        blocks.append({"s4": s4_sample, "s15": s15_sample, "s10": s10_sample, "s8": s8_sample})
+        blocks.append({"no_stim_start": no_stim_start_sample, "s15": s15_sample, "s10": s10_sample, "s8": s8_sample})
 
     return blocks
 
@@ -120,18 +119,15 @@ def make_task_epochs(
     raw_labels,
     epoch_duration=5.0,
     n_epochs_per_block=None,
-    block_open_annotation="Stimulus/S  4",
-    no_stim_end_annotation="Stimulus/S 15",
-    stim_start_annotation="Stimulus/S 15",
+    s15_annotation="Stimulus/S 15",
     block_start_annotation="Stimulus/S 10",
     block_end_annotation="Stimulus/S  8",
 ):
-    """Create S4-S15, S15-S10, and S10-S8 task epochs."""
+    """Create S15-20s to S15, S15-S10, and S10-S8 task epochs."""
     events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR") 
     print("Event IDs found:", event_id)
 
-    s4_events, _ = _events_for_annotation(events, event_id, block_open_annotation)
-    s15_events, _ = _events_for_annotation(events, event_id, no_stim_end_annotation)
+    s15_events, _ = _events_for_annotation(events, event_id, s15_annotation)
     s10_events, _ = _events_for_annotation(events, event_id, block_start_annotation)
     s8_events, _ = _events_for_annotation(events, event_id, block_end_annotation)
 
@@ -140,8 +136,8 @@ def make_task_epochs(
     if epoch_samples <= 0:
         raise ValueError(f"Epoch duration must be positive, got {epoch_duration}.")
 
-    task_blocks = _pair_task_blocks(s4_events, s15_events, s10_events, s8_events, sfreq)
-    no_stim_intervals = [(block["s4"], block["s15"]) for block in task_blocks]
+    task_blocks = _pair_task_blocks(s15_events, s10_events, s8_events, sfreq)
+    no_stim_intervals = [(block["no_stim_start"], block["s15"]) for block in task_blocks]
     stim_intervals = [(block["s15"], block["s10"]) for block in task_blocks]
 
     baseline_no_stim_epochs = _make_interval_epochs(raw_labels, no_stim_intervals, "baseline/no_stim/S4-S15", 1, sfreq)
