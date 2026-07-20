@@ -29,8 +29,8 @@ import numpy as np
 import pandas as pd
 
 from utils07 import (
-    base_tag,
     chmod_group,
+    connectivity_tag,
     compute_connectivity,
     load_roi_epochs,
     output_directory,
@@ -112,7 +112,7 @@ def process_connectivity(args: argparse.Namespace) -> None:
     if not np.isclose(sfreq, nonbaseline_sfreq):
         raise ValueError(f"Baseline and nonbaseline sfreq differ: {sfreq} vs {nonbaseline_sfreq}")
 
-    tag = base_tag(args)
+    tag = connectivity_tag(args)
 
     print(f"Subject: sub-{args.subject}")
     print(f"Session: ses-{args.session}")
@@ -219,17 +219,19 @@ def process_task_blocks(
 ) -> None:
     """Baseline-correct each task block using the baseline epoch from the same S15 block."""
     n_blocks = baseline_data.shape[0] #n_baseline_epochs x n_ROIs x n_times
-    expected_nonbaseline_epochs = n_blocks * args.n_epochs_per_block #9 blocks and 19 nonbaseline epochs per block = 171
+    n_epochs_per_block = nonbaseline_data.shape[0] // n_blocks
+
+    expected_nonbaseline_epochs = n_blocks * n_epochs_per_block
     if nonbaseline_data.shape[0] != expected_nonbaseline_epochs:
         raise ValueError(
             "Task nonbaseline epochs do not match the expected block layout: "
             f"{nonbaseline_data.shape[0]} epochs found, expected "
-            f"{n_blocks} baseline blocks x {args.n_epochs_per_block} epochs/block = "
+            f"{n_blocks} baseline blocks x {n_epochs_per_block} epochs/block = "
             f"{expected_nonbaseline_epochs}."
         )
 
     print(f"Task blocks: {n_blocks}")
-    print(f"Nonbaseline epochs per block: {args.n_epochs_per_block}")
+    print(f"Nonbaseline epochs per block: {n_epochs_per_block}")
 
     for band_name in selected_bands:
         fmin, fmax = BANDS[band_name]
@@ -237,10 +239,10 @@ def process_task_blocks(
 
         for block_index in range(n_blocks):
             block_number = block_index + 1
-            start = block_index * args.n_epochs_per_block
-            stop = start + args.n_epochs_per_block
+            start = block_index * n_epochs_per_block
+            stop = start + n_epochs_per_block
             block_baseline_data = baseline_data[block_index : block_index + 1]
-            block_nonbaseline_data = nonbaseline_data[start:stop] #block 1: nonbaseline_data[0:19] block 2: nonbaseline_data[19:38] block 3: nonbaseline_data[38:57]
+            block_nonbaseline_data = nonbaseline_data[start:stop]
 
             baseline_matrix = compute_connectivity(block_baseline_data, sfreq, fmin, fmax, args.connectivity_method)
             nonbaseline_matrix = compute_connectivity(block_nonbaseline_data, sfreq, fmin, fmax, args.connectivity_method)
@@ -296,14 +298,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default=None, help="Optional explicit output directory.")
     parser.add_argument("--bands", nargs="+", choices=list(BANDS), default=None, help="Bands to compute. Default: all.")
     parser.add_argument("--connectivity-method", default="imcoh", help="Connectivity method. Default: imcoh.")
-    parser.add_argument("--n-epochs-per-block", type=int, default=19, help="Task nonbaseline epochs per S15 block. Default: 19.")
+    parser.add_argument("--n-epochs-per-block", type=int, default=None, help="Task nonbaseline epochs per block. Default: infer from the epoch files.")
     parser.add_argument(
         "--baseline-kind",
         choices=("baseline", "baseline_stim", "baseline_no_stim"),
         default="baseline",
         help=(
             "Task baseline epochs file to use. baseline uses the compatibility file, "
-            "baseline_stim uses S15-S10, and baseline_no_stim uses S4-S15."
+            "baseline_stim uses S15-S10, and baseline_no_stim uses S15-20s to S15."
         ),
     )
     return parser.parse_args()

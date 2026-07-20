@@ -40,6 +40,17 @@ def base_tag(args: argparse.Namespace) -> str:
     return tag
 
 
+def connectivity_tag(args: argparse.Namespace) -> str:
+    """Return the filename stem used for connectivity outputs."""
+    tag = base_tag(args)
+    baseline_kind = getattr(args, "baseline_kind", "baseline")
+    if args.task.lower() == "task" and baseline_kind != "baseline":
+        baseline_label = baseline_kind.replace("baseline_", "")
+        tag = f"{tag}_baseline-{baseline_label}"
+
+    return tag
+
+
 def inverse_directory(args: argparse.Namespace) -> Path:
     """Return the inverse-solution directory from step 06."""
     directory = (
