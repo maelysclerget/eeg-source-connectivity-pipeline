@@ -162,20 +162,11 @@ def plot_noise_covariance(noise_cov: mne.Covariance, info: mne.Info, plot_dir: P
     if cov_data.ndim == 1:
         cov_data = np.diag(cov_data)
 
-    channel_names = list(noise_cov.names)
-    if not channel_names:
-        channel_names = list(info["ch_names"])[: cov_data.shape[0]]
-
-    n_channels = len(channel_names)
+    n_channels = cov_data.shape[0]
     fig_size = max(8, n_channels * 0.18)
     fig, ax = plt.subplots(figsize=(fig_size, fig_size), constrained_layout=True)
     im = ax.imshow(cov_data, cmap="RdBu_r", aspect="equal")
     ax.set_title("EEG covariance")
-    ax.set_xticks(np.arange(n_channels))
-    ax.set_yticks(np.arange(n_channels))
-    ax.set_xticklabels(channel_names, rotation=90, fontsize=5)
-    ax.set_yticklabels(channel_names, fontsize=5)
-    ax.tick_params(axis="both", length=0)
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     fig.savefig(
         plot_dir / f"{base_tag}_covariance.png",
