@@ -26,7 +26,7 @@ if [ -z "$CURRENT_FILE" ]; then
     exit 1
 fi
 
-read -r SUB SES TASK MODE METHOD COV_LABEL LABEL_KIND CONNECTIVITY_BASELINE N_EPOCHS_PER_BLOCK <<< "$CURRENT_FILE"
+read -r SUB SES TASK MODE METHOD COV_LABEL LABEL_KIND CONNECTIVITY_BASELINE <<< "$CURRENT_FILE"
 
 if [ -z "$MODE" ]; then
     MODE="surface"
@@ -72,11 +72,6 @@ else
     LABELS_FIF="$LABELS_DIR/${BASE_TAG}_${LABEL_KIND}.fif"
 fi
 
-EPOCH_COUNT_ARGS=""
-if [ -n "$N_EPOCHS_PER_BLOCK" ] && [ "$N_EPOCHS_PER_BLOCK" != "none" ]; then
-    EPOCH_COUNT_ARGS="--n-epochs-per-block $N_EPOCHS_PER_BLOCK"
-fi
-
 echo "SUB = '$SUB'"
 echo "SES = '$SES'"
 echo "TASK = '$TASK'"
@@ -85,7 +80,6 @@ echo "METHOD = '$METHOD'"
 echo "COV_LABEL = '$COV_LABEL'"
 echo "LABEL_KIND = '$LABEL_KIND'"
 echo "CONNECTIVITY_BASELINE = '$CONNECTIVITY_BASELINE'"
-echo "N_EPOCHS_PER_BLOCK = '$N_EPOCHS_PER_BLOCK'"
 echo "LABELS_FIF = '$LABELS_FIF'"
 echo "Processing ROI label epochs for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD label-$LABEL_KIND"
 
@@ -121,6 +115,5 @@ apptainer exec \
             --mode "'"$MODE"'" \
             --method "'"$METHOD"'" \
             --cov-label "'"$COV_LABEL"'" \
-            --connectivity-baseline "'"$CONNECTIVITY_BASELINE"'" \
-            '"$EPOCH_COUNT_ARGS"'
+            --connectivity-baseline "'"$CONNECTIVITY_BASELINE"'"
     '

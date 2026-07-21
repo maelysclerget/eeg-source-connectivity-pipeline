@@ -24,14 +24,10 @@ TASK_COV_LABELS=("4" "15")
 # *_baseline-epo.fif file used by connectivity when --baseline-kind baseline.
 CONNECTIVITY_BASELINE="stim"
 
-# Optional cap for complete nonbaseline epochs per task block. Use "none" to
-# keep all complete epochs and let the Python script check that blocks align.
-N_EPOCHS_PER_BLOCK="none"
-
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
-echo "Scanning $DATA_ROOT for task-task and task-RSpre EEG files."
+echo "Scanning $DATA_ROOT for task, RSpre, RSpost, and RSstim EEG files."
 
 find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-*_eeg.vhdr" | sort | while read -r FILE
 do
@@ -41,7 +37,7 @@ do
     SES=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-([^_]+)_task-.*/\1/')
     TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
 
-    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ]; then
+    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ] && [ "$TASK" != "RSpost" ] && [ "$TASK" != "RSstim" ]; then
         continue
     fi
 
@@ -88,18 +84,21 @@ do
                         fi
                     fi
                     OUTPUT_DIR="$INVERSE_DIR/epochs"
-                    BASELINE_FILE="$OUTPUT_DIR/${BASE_TAG}_${LABEL_KIND}_baseline-epo.fif"
-                    NONBASELINE_FILE="$OUTPUT_DIR/${BASE_TAG}_${LABEL_KIND}_nonbaseline-epo.fif"
+                    if [ "$TASK" = "task" ]; then
+                        OUTPUT_FILE="$OUTPUT_DIR/${BASE_TAG}_${LABEL_KIND}_task_fixed-epo.fif"
+                    else
+                        OUTPUT_FILE="$OUTPUT_DIR/${BASE_TAG}_${LABEL_KIND}_rs_s15_epochs-epo.fif"
+                    fi
 
                     if [ ! -f "$INPUT_FILE" ]; then
                         echo "Skipping missing labels FIF: $INPUT_FILE"
                         continue
                     fi
 
-                    if [ -f "$BASELINE_FILE" ] && [ -f "$NONBASELINE_FILE" ]; then
+                    if [ -f "$OUTPUT_FILE" ]; then
                         echo "Skipping already epoched: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD cov-$PARAM_COV_LABEL $LABEL_KIND"
                     else
-                        echo "$SUB $SES $TASK $MODE $METHOD $PARAM_COV_LABEL $LABEL_KIND $CONNECTIVITY_BASELINE $N_EPOCHS_PER_BLOCK" >> "$PARAM_LIST"
+                        echo "$SUB $SES $TASK $MODE $METHOD $PARAM_COV_LABEL $LABEL_KIND $CONNECTIVITY_BASELINE" >> "$PARAM_LIST"
                     fi
                 done
             done

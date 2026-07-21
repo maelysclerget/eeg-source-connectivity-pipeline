@@ -16,10 +16,12 @@ import os
 from pathlib import Path
 
 import mne
+import pandas as pd
 
 from utils08 import (
     labels_evoked_to_raw,
-    make_rspre_epochs,
+    make_rs_baseline_epochs,
+    make_rs_epochs,
     make_task_epochs,
     print_annotation_descriptions,
     save_epochs,
@@ -104,6 +106,28 @@ def save_annotation_sidecar(raw_path: Path, labels_path: Path, out_dir: Path) ->
     return annotations
 
 
+def save_sequence_epochs(sequence_epochs, out_dir: Path, stem: str) -> None:
+    """Save variable-length sequence epochs as one FIF per sequence interval."""
+    rows = []
+    for block, sequence, duration, epochs in sequence_epochs:
+        path = out_dir / f"{stem}_task_sequence_block-{block:02d}_seq-{sequence:02d}-epo.fif"
+        save_epochs(epochs, path)
+        chmod_group(path)
+        rows.append(
+            {
+                "block": block,
+                "sequence": sequence,
+                "duration_s": duration,
+                "path": str(path),
+            }
+        )
+
+    index_path = out_dir / f"{stem}_task_sequence_index.csv"
+    pd.DataFrame(rows).to_csv(index_path, index=False)
+    chmod_group(index_path)
+    print(f"Saved sequence index: {index_path}")
+
+
 def process_label_epochs(args: argparse.Namespace) -> None:
     labels_path = Path(args.labels_fif) if args.labels_fif else default_labels_fif_path(args)
     if not labels_path.exists():
@@ -124,44 +148,49 @@ def process_label_epochs(args: argparse.Namespace) -> None:
         raise ValueError(f"Expected labels FIF to start at 0 s, got tmin={evoked.tmin}.")
 
     task_lower = args.task.lower()
-    annotations = None
-    if task_lower == "task":
-        raw_path = get_raw_fif_path(args)
-        annotations = save_annotation_sidecar(raw_path, labels_path, out_dir)
-    else:
-        print(f"\n{args.task} selected: annotations are not needed for epoching.")
+    raw_path = get_raw_fif_path(args)
+    annotations = save_annotation_sidecar(raw_path, labels_path, out_dir)
 
     raw_labels = labels_evoked_to_raw(evoked, annotations=annotations)
+    stem = labels_path.stem
 
     if task_lower == "task":
-        baseline_no_stim_epochs, baseline_stim_epochs, nonbaseline_epochs = make_task_epochs(
+        baseline_no_stim_epochs, baseline_stim_epochs, fixed_task_epochs, sequence_epochs = make_task_epochs(
             raw_labels,
             epoch_duration=args.epoch_duration,
-            n_epochs_per_block=args.n_epochs_per_block,
             s15_annotation=args.s15_annotation,
             block_start_annotation=args.block_start_annotation,
-            block_end_annotation=args.block_end_annotation,
         )
-    else:
-        baseline_epochs, nonbaseline_epochs = make_rspre_epochs(
-            raw_labels,
-            baseline_duration=args.rspre_baseline_duration,
-            epoch_duration=args.epoch_duration,
-        )
-
-    stem = labels_path.stem
-    baseline_path = out_dir / f"{stem}_baseline-epo.fif"
-    nonbaseline_path = out_dir / f"{stem}_nonbaseline-epo.fif"
-    if task_lower == "task":
         baseline_no_stim_path = out_dir / f"{stem}_baseline_no_stim-epo.fif"
         baseline_stim_path = out_dir / f"{stem}_baseline_stim-epo.fif"
+        task_fixed_path = out_dir / f"{stem}_task_fixed-epo.fif"
+        nonbaseline_path = out_dir / f"{stem}_nonbaseline-epo.fif"
+        baseline_path = out_dir / f"{stem}_baseline-epo.fif"
+
         save_epochs(baseline_no_stim_epochs, baseline_no_stim_path)
         save_epochs(baseline_stim_epochs, baseline_stim_path)
+        save_epochs(fixed_task_epochs, task_fixed_path)
+        save_epochs(fixed_task_epochs, nonbaseline_path)
+        save_sequence_epochs(sequence_epochs, out_dir, stem)
+
         baseline_epochs = baseline_stim_epochs if args.connectivity_baseline == "stim" else baseline_no_stim_epochs
         print(f"Saving {args.connectivity_baseline} baseline as compatibility file: {baseline_path}")
+        save_epochs(baseline_epochs, baseline_path)
+        return
 
-    save_epochs(baseline_epochs, baseline_path)
-    save_epochs(nonbaseline_epochs, nonbaseline_path)
+    rs_epochs = make_rs_epochs(
+        raw_labels,
+        task_name=args.task,
+        epoch_duration=args.epoch_duration,
+        s15_annotation=args.s15_annotation,
+    )
+    rs_path = out_dir / f"{stem}_rs_s15_epochs-epo.fif"
+    save_epochs(rs_epochs, rs_path)
+    save_epochs(rs_epochs, out_dir / f"{stem}_nonbaseline-epo.fif")
+
+    if task_lower in {"rspre", "rspost"}:
+        baseline_epochs = make_rs_baseline_epochs(raw_labels, epoch_duration=args.epoch_duration)
+        save_epochs(baseline_epochs, out_dir / f"{stem}_baseline-epo.fif")
 
 
 def parse_args() -> argparse.Namespace:
@@ -177,13 +206,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cov-label", default=cov_label, help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: labels_fif/../epochs.")
-    parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="Task S15 annotation used for S15-20s baseline and S15-to-S10 baseline.")
-    parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task annotation used as block start for non-baseline epochs.")
-    parser.add_argument("--block-end-annotation", default="Stimulus/S  8", help="Task annotation used as block end for non-baseline epochs.")
-    parser.add_argument("--epoch-duration", type=float, default=5.0, help="Non-baseline epoch duration in seconds.")
+    parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="S15 annotation used for RS blocks and task baselines.")
+    parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task S10 annotation used as fixed and sequence block start.")
+    parser.add_argument("--epoch-duration", type=float, default=5.0, help="Epoch duration in seconds for fixed epochs.")
     parser.add_argument("--connectivity-baseline", choices=("stim", "no_stim"), default="stim", help="For task data, which baseline to also save as *_baseline-epo.fif for connectivity compatibility.")
-    parser.add_argument("--n-epochs-per-block", type=int, default=None, help="For task data, optional maximum number of 5 s epochs kept from each S10-to-S8 block. Default: keep all complete epochs in each block.")
-    parser.add_argument("--rspre-baseline-duration", type=float, default=20.0, help="For RSpre, duration in seconds of the first-recording baseline epoch.")
     return parser.parse_args()
 
 
