@@ -32,8 +32,8 @@ DERIVATIVES_DIR = "/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 #     python 08_EEG_epoch_label_time_courses.py
 subject = "41Y01"
 session = "1"
-task = "task"
-mode = "surface"
+task = "RSpre"
+mode = "volume"
 method = "MNE"
 cov_label = "15"
 labels_fif = None

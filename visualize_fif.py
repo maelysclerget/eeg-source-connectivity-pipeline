@@ -172,14 +172,14 @@ def main():
     if not trans_path.exists():
         raise FileNotFoundError(f"Transform file not found: {trans_path}")
 
-    #fwd_path = find_one(inverse_dir, "-fwd.fif")
+    fwd_path = find_one(inverse_dir, "-fwd.fif")
     #cov_path = find_one(inverse_dir, "-cov.fif")
     #inv_path = find_one(inverse_dir, "-inv.fif")
     #show_source_estimate()
     show_labels()
 
-    #if fwd_path is not None:
-    #    show_forward(fwd_path)
+    if fwd_path is not None:
+        show_forward(fwd_path)
 
     #if cov_path is not None:
     #    show_cov(cov_path, fwd_path=fwd_path)
