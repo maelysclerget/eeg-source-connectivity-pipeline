@@ -70,7 +70,7 @@ def append_summary_row(
     fmin: float,
     fmax: float,
     roi_names: list[str],
-    baseline_data: np.ndarray,
+    baseline_data: np.ndarray | None,
     nonbaseline_data: np.ndarray,
     matrix: np.ndarray,
     block: int | str,
@@ -84,9 +84,9 @@ def append_summary_row(
             "Fmin": fmin,
             "Fmax": fmax,
             "N_ROIs": len(roi_names),
-            "N_baseline_epochs": baseline_data.shape[0],
+            "N_baseline_epochs": baseline_data.shape[0] if baseline_data is not None else 0,
             "N_nonbaseline_epochs": nonbaseline_data.shape[0],
-            "N_baseline_samples": baseline_data.shape[2],
+            "N_baseline_samples": baseline_data.shape[2] if baseline_data is not None else 0,
             "N_nonbaseline_samples": nonbaseline_data.shape[2],
             "Min": float(np.min(matrix)),
             "Max": float(np.max(matrix)),
@@ -104,15 +104,20 @@ def process_connectivity(args: argparse.Namespace) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     os.chmod(out_dir, 0o2770)
 
-    baseline_kind = args.baseline_kind if args.task.lower() == "task" else "baseline"
-    baseline_data, roi_names, sfreq, baseline_source = load_roi_epochs(args, baseline_kind)
-    nonbaseline_data, nonbaseline_roi_names, nonbaseline_sfreq, nonbaseline_source = load_roi_epochs(args, "nonbaseline")
-    if roi_names != nonbaseline_roi_names:
-        raise ValueError("Baseline and nonbaseline ROI names do not match.")
-    if not np.isclose(sfreq, nonbaseline_sfreq):
-        raise ValueError(f"Baseline and nonbaseline sfreq differ: {sfreq} vs {nonbaseline_sfreq}")
-
     tag = connectivity_tag(args)
+    task_lower = args.task.lower()
+
+    if task_lower == "task":
+        baseline_data, roi_names, sfreq, baseline_source = load_roi_epochs(args, args.baseline_kind)
+        nonbaseline_data, nonbaseline_roi_names, nonbaseline_sfreq, nonbaseline_source = load_roi_epochs(args, "nonbaseline")
+        if roi_names != nonbaseline_roi_names:
+            raise ValueError("Baseline and nonbaseline ROI names do not match.")
+        if not np.isclose(sfreq, nonbaseline_sfreq):
+            raise ValueError(f"Baseline and nonbaseline sfreq differ: {sfreq} vs {nonbaseline_sfreq}")
+    else:
+        baseline_data = None
+        baseline_source = "none"
+        nonbaseline_data, roi_names, sfreq, nonbaseline_source = load_roi_epochs(args, "rs_s15_epochs")
 
     print(f"Subject: sub-{args.subject}")
     print(f"Session: ses-{args.session}")
@@ -123,14 +128,14 @@ def process_connectivity(args: argparse.Namespace) -> None:
     print(f"Baseline epochs: {baseline_source}")
     print(f"Nonbaseline epochs: {nonbaseline_source}")
     print(f"Number of retained ROIs: {len(roi_names)}")
-    print(f"Baseline epochs: {baseline_data.shape[0]}")
+    print(f"Baseline epochs: {baseline_data.shape[0] if baseline_data is not None else 0}")
     print(f"Nonbaseline epochs: {nonbaseline_data.shape[0]}")
     print(f"Sampling frequency: {sfreq:g} Hz")
     print(f"Output: {out_dir}")
 
     summary_rows = []
 
-    if args.task.lower() == "task":
+    if task_lower == "task":
         process_task_blocks(
             args,
             selected_bands,
@@ -146,7 +151,6 @@ def process_connectivity(args: argparse.Namespace) -> None:
         process_resting_recording(
             args,
             selected_bands,
-            baseline_data,
             nonbaseline_data,
             roi_names,
             sfreq,
@@ -165,7 +169,6 @@ def process_connectivity(args: argparse.Namespace) -> None:
 def process_resting_recording(
     args: argparse.Namespace,
     selected_bands: list[str],
-    baseline_data: np.ndarray,
     nonbaseline_data: np.ndarray,
     roi_names: list[str],
     sfreq: float,
@@ -173,14 +176,12 @@ def process_resting_recording(
     tag: str,
     summary_rows: list[dict],
 ) -> None:
-    """Baseline-correct one non-task recording against its first baseline window."""
+    """Compute non-baseline RS connectivity without baseline correction."""
     for band_name in selected_bands:
         fmin, fmax = BANDS[band_name]
         print(f"Computing {band_name}: {fmin:g}-{fmax:g} Hz")
 
-        baseline_matrix = compute_connectivity(baseline_data, sfreq, fmin, fmax, args.connectivity_method)
-        nonbaseline_matrix = compute_connectivity(nonbaseline_data, sfreq, fmin, fmax, args.connectivity_method)
-        matrix = nonbaseline_matrix - baseline_matrix
+        matrix = compute_connectivity(nonbaseline_data, sfreq, fmin, fmax, args.connectivity_method)
         file_tag = f"{tag}_band-{band_name}"
         matrix_csv = out_dir / f"{file_tag}_connectivity_matrix.csv"
         heatmap_png = out_dir / f"{file_tag}_connectivity_heatmap.png"
@@ -199,7 +200,7 @@ def process_resting_recording(
             f"{args.task} ROI connectivity circle - {args.method} - {band_name} ({fmin:g}-{fmax:g} Hz)",
         )
 
-        append_summary_row(summary_rows, band_name, fmin, fmax, roi_names, baseline_data, nonbaseline_data, matrix, "all")
+        append_summary_row(summary_rows, band_name, fmin, fmax, roi_names, None, nonbaseline_data, matrix, "all")
 
         print(f"Saved: {matrix_csv}")
         print(f"Saved: {heatmap_png}")
@@ -218,20 +219,13 @@ def process_task_blocks(
     summary_rows: list[dict],
 ) -> None:
     """Baseline-correct each task block using the baseline epoch from the same S15 block."""
-    n_blocks = baseline_data.shape[0] #n_baseline_epochs x n_ROIs x n_times
-    n_epochs_per_block = nonbaseline_data.shape[0] // n_blocks
-
-    expected_nonbaseline_epochs = n_blocks * n_epochs_per_block
-    if nonbaseline_data.shape[0] != expected_nonbaseline_epochs:
-        raise ValueError(
-            "Task nonbaseline epochs do not match the expected block layout: "
-            f"{nonbaseline_data.shape[0]} epochs found, expected "
-            f"{n_blocks} baseline blocks x {n_epochs_per_block} epochs/block = "
-            f"{expected_nonbaseline_epochs}."
-        )
+    baseline_epochs_per_block = 5 if args.baseline_kind in {"baseline", "baseline_stim"} else 4
+    nonbaseline_epochs_per_block = args.n_epochs_per_block or 18
+    n_blocks = nonbaseline_data.shape[0] // nonbaseline_epochs_per_block
 
     print(f"Task blocks: {n_blocks}")
-    print(f"Nonbaseline epochs per block: {n_epochs_per_block}")
+    print(f"Baseline epochs per block: {baseline_epochs_per_block}")
+    print(f"Nonbaseline epochs per block: {nonbaseline_epochs_per_block}")
 
     for band_name in selected_bands:
         fmin, fmax = BANDS[band_name]
@@ -239,10 +233,12 @@ def process_task_blocks(
 
         for block_index in range(n_blocks):
             block_number = block_index + 1
-            start = block_index * n_epochs_per_block
-            stop = start + n_epochs_per_block
-            block_baseline_data = baseline_data[block_index : block_index + 1]
-            block_nonbaseline_data = nonbaseline_data[start:stop]
+            baseline_start = block_index * baseline_epochs_per_block
+            baseline_stop = baseline_start + baseline_epochs_per_block
+            nonbaseline_start = block_index * nonbaseline_epochs_per_block
+            nonbaseline_stop = nonbaseline_start + nonbaseline_epochs_per_block
+            block_baseline_data = baseline_data[baseline_start:baseline_stop]
+            block_nonbaseline_data = nonbaseline_data[nonbaseline_start:nonbaseline_stop]
 
             baseline_matrix = compute_connectivity(block_baseline_data, sfreq, fmin, fmax, args.connectivity_method)
             nonbaseline_matrix = compute_connectivity(block_nonbaseline_data, sfreq, fmin, fmax, args.connectivity_method)
