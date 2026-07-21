@@ -32,7 +32,7 @@ do
     TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
 
     # Expected output file
-    OUTPUT_FILE="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/personalized_montage/${SUB}_ses${SES}_personalized_montage.fif"
+    OUTPUT_FILE="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/personalized_montage/${SUB}_ses${SES}_task-${TASK}_personalized_montage.fif"
 
     ## Skip already processed files
     #if [ -f "$OUTPUT_FILE" ]; then
