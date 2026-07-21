@@ -17,7 +17,6 @@ TASK="RSpre"
 MODES=("surface" "volume" "mixed")
 METHOD="MNE"
 COV_LABEL="15"
-CONNECTIVITY_BASELINE="stim"
 
 for MODE in "${MODES[@]}"
 do
@@ -29,7 +28,7 @@ do
 
     for LABEL_KIND in "${LABEL_KINDS[@]}"
     do
-        echo "$SUB $SES $TASK $MODE $METHOD $COV_LABEL $LABEL_KIND $CONNECTIVITY_BASELINE" >> "$PARAM_LIST"
+        echo "$SUB $SES $TASK $MODE $METHOD $COV_LABEL $LABEL_KIND" >> "$PARAM_LIST"
     done
 done
 

@@ -25,7 +25,7 @@ COV_DURATION="20.0"
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
-echo "Scanning $DATA_ROOT for task-task and task-RSpre EEG files."
+echo "Scanning $DATA_ROOT for task-task, task-RSpre, and task-RSstim EEG files."
 
 find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-*_eeg.vhdr" | sort | while read -r FILE
 do
@@ -35,7 +35,7 @@ do
     SES=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-([^_]+)_task-.*/\1/')
     TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
 
-    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ]; then
+    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ] && [ "$TASK" != "RSstim" ]; then
         continue
     fi
 
@@ -57,14 +57,14 @@ do
                 do
                     if [ "$TASK" = "task" ]; then
                         OUTPUT_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/task/cov$COV_LABEL"
-                    elif [ "$TASK" = "RSpre" ]; then
-                        OUTPUT_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/RSpre"
+                    elif [ "$TASK" = "RSpre" ] || [ "$TASK" = "RSstim" ]; then
+                        OUTPUT_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/$TASK"
                     else
                         OUTPUT_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/task-$TASK/cov-$COV_LABEL"
                     fi
 
                     BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
-                    if [ "$TASK" != "RSpre" ]; then
+                    if [ "$TASK" = "task" ]; then
                         BASE_TAG="${BASE_TAG}_cov-${COV_LABEL}"
                     fi
 

@@ -50,7 +50,7 @@ def chmod_group(path: str | Path) -> None:
 
 def get_raw_fif_path(args: argparse.Namespace) -> Path:
     """Return the preprocessed raw FIF path that contains annotations."""
-    if args.task.lower() == "task":
+    if args.task.lower() in {"task", "rsstim"}:
         filename = (
             f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
             "_eeg_not_interpolated_final_preprocessed_eeg.fif"
@@ -171,18 +171,11 @@ def process_label_epochs(args: argparse.Namespace) -> None:
         baseline_no_stim_path = out_dir / f"{stem}_baseline_no_stim-epo.fif"
         baseline_stim_path = out_dir / f"{stem}_baseline_stim-epo.fif"
         task_fixed_path = out_dir / f"{stem}_task_fixed-epo.fif"
-        nonbaseline_path = out_dir / f"{stem}_nonbaseline-epo.fif"
-        baseline_path = out_dir / f"{stem}_baseline-epo.fif"
 
         save_epochs(baseline_no_stim_epochs, baseline_no_stim_path)
         save_epochs(baseline_stim_epochs, baseline_stim_path)
         save_epochs(fixed_task_epochs, task_fixed_path)
-        save_epochs(fixed_task_epochs, nonbaseline_path)
         save_sequence_epochs(sequence_epochs, out_dir, stem)
-
-        baseline_epochs = baseline_stim_epochs if args.connectivity_baseline == "stim" else baseline_no_stim_epochs
-        print(f"Saving {args.connectivity_baseline} baseline as compatibility file: {baseline_path}")
-        save_epochs(baseline_epochs, baseline_path)
         return
 
     rs_epochs = make_rs_epochs(
@@ -211,7 +204,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="S15 annotation used for RS blocks and task baselines.")
     parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task S10 annotation used as fixed and sequence block start.")
     parser.add_argument("--epoch-duration", type=float, default=5.0, help="Epoch duration in seconds for fixed epochs.")
-    parser.add_argument("--connectivity-baseline", choices=("stim", "no_stim"), default="stim", help="For task data, which baseline to also save as *_baseline-epo.fif for connectivity compatibility.")
     return parser.parse_args()
 
 

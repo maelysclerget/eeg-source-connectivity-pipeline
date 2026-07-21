@@ -313,15 +313,13 @@ def get_inverse_output_dir(subject: str, session: str, task: str, mode: str, met
     task_lower = task.lower()
     if task_lower == "task":
         return base_dir / "task" / f"cov{cov_label}"
-    if task_lower == "rspre":
-        return base_dir / "RSpre"
-    return base_dir / f"task-{task}" / f"{cov_label}"
+    return base_dir / task
 
 
 def get_inverse_base_tag(subject: str, session: str, task: str, mode: str, method: str, cov_label: str) -> str:
     """Return the filename stem for one inverse-solution output set."""
     base_tag = f"{subject}_ses{session}_task-{task}_src-{mode}_method-{method}"
-    if task.lower() == "rspre":
+    if task.lower() != "task":
         return base_tag
     return f"{base_tag}_cov-{cov_label}"
 
