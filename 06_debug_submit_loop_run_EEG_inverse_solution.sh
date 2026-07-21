@@ -16,9 +16,9 @@ mkdir -p "$LOG_DIR"
 # ---- ONE TEST SUBJECT ----
 SUB="41Y01"
 SES="1"
-TASK="RSpre"
-MODES=("volume")
-METHOD="eLORETA"
+TASK="RSstim"
+MODES=("surface" "volume" "mixed")
+METHOD="MNE"
 COV_DURATION="20.0"
 
 for MODE in "${MODES[@]}"
