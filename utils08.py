@@ -69,9 +69,9 @@ def _pair_task_blocks(s15_events, s10_events, s8_events, sfreq):
 
     # 1st value of block index is start=1
     for block_index, s15_event in enumerate(s15_events, start=1):
-        s15_sample = int(s15_event[0])
+        s15_sample = int(s15_event[0]) #[sample_number, previous_event_value, event_id]
         s8_sample = int(s8_events[block_index - 1, 0])
-        no_stim_start_sample = s15_sample - no_stim_samples
+        no_stim_start_sample = s15_sample - no_stim_samples #s15 - 20 sec 
         if no_stim_start_sample < 0:
             raise ValueError(f"Cannot create 20 s no-stim baseline before S15 for block {block_index}: S15={_sample_to_time(s15_sample, sfreq):.3f} s.")
         if not (s15_sample < s8_sample):

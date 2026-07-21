@@ -13,9 +13,9 @@ mkdir -p "$LOG_DIR"
 # ---- ONE TEST SUBJECT ----
 SUB="41Y01"
 SES="1"
-TASK="task"
+TASK="RSpre"
 MODES=("surface" "volume" "mixed")
-METHOD="eLORETA"
+METHOD="MNE"
 COV_LABEL="15"
 CONNECTIVITY_BASELINE="stim"
 N_EPOCHS_PER_BLOCK="none"
