@@ -471,7 +471,16 @@ if __name__ == "__main__":
         raise RuntimeError(f"Directory not found: {input_dir}")
 
     # Representative preprocessed FIF
-    fif_path = sorted(input_dir.glob(f"sub-{subject}_ses-{session}_task-{task}_eeg_final_preprocessed_raw_source_level.fif"))
+    stem = f"sub-{subject}_ses-{session}_task-{task}"
+    task_lower = task.lower()
+    if task_lower == "task":
+        fif_name = f"{stem}_eeg_not_interpolated_final_preprocessed_eeg.fif"
+    elif task_lower == "rsstim":
+        fif_name = f"{stem}_eeg_final_preprocessed_eeg_not_interpolated.fif"
+    else:
+        fif_name = f"{stem}_eeg_final_preprocessed_raw_source_level.fif"
+
+    fif_path = sorted(input_dir.glob(fif_name))
 
     print(
         f"Found {len(fif_path)} EEG files "
