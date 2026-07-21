@@ -50,16 +50,24 @@ def chmod_group(path: str | Path) -> None:
 
 
 def get_raw_fif_path(args: argparse.Namespace) -> Path:
-    """Return the preprocessed raw FIF path that contains task annotations."""
+    """Return the preprocessed raw FIF path that contains annotations."""
+    if args.task.lower() == "task":
+        filename = (
+            f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
+            "_eeg_not_interpolated_final_preprocessed_eeg.fif"
+        )
+    else:
+        filename = (
+            f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
+            "_eeg_final_preprocessed_raw_source_level.fif"
+        )
+
     raw_path = (
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
         / f"ses-{args.session}"
         / args.task
-        / (
-            f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
-            "_eeg_not_interpolated_final_preprocessed_eeg.fif"
-        )
+        / filename
     )
 
     if not raw_path.exists():
