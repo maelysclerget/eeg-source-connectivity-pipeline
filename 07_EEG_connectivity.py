@@ -109,7 +109,7 @@ def process_connectivity(args: argparse.Namespace) -> None:
 
     if task_lower == "task":
         baseline_data, roi_names, sfreq, baseline_source = load_roi_epochs(args, args.baseline_kind)
-        nonbaseline_data, nonbaseline_roi_names, nonbaseline_sfreq, nonbaseline_source = load_roi_epochs(args, "nonbaseline")
+        nonbaseline_data, nonbaseline_roi_names, nonbaseline_sfreq, nonbaseline_source = load_roi_epochs(args, "task_fixed")
         if roi_names != nonbaseline_roi_names:
             raise ValueError("Baseline and nonbaseline ROI names do not match.")
         if not np.isclose(sfreq, nonbaseline_sfreq):
@@ -219,7 +219,7 @@ def process_task_blocks(
     summary_rows: list[dict],
 ) -> None:
     """Baseline-correct each task block using the baseline epoch from the same S15 block."""
-    baseline_epochs_per_block = 5 if args.baseline_kind in {"baseline", "baseline_stim"} else 4
+    baseline_epochs_per_block = 5 if args.baseline_kind == "baseline_stim" else 4
     nonbaseline_epochs_per_block = args.n_epochs_per_block or 18
     n_blocks = nonbaseline_data.shape[0] // nonbaseline_epochs_per_block
 
@@ -297,11 +297,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n-epochs-per-block", type=int, default=None, help="Task nonbaseline epochs per block. Default: infer from the epoch files.")
     parser.add_argument(
         "--baseline-kind",
-        choices=("baseline_stim", "baseline_no_stim", "baseline"),
+        choices=("baseline_stim", "baseline_no_stim"),
         default="baseline_stim",
         help=(
-            "Task baseline epochs file to use. baseline_stim uses S15-S10, "
-            "baseline_no_stim uses S15-20s to S15, and baseline uses the compatibility file."
+            "Task baseline epochs file to use. baseline_stim uses S15 to S15+25 s, "
+            "baseline_no_stim uses S15-20 s to S15."
         ),
     )
     return parser.parse_args()

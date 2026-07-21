@@ -20,10 +20,6 @@ METHODS=("MNE" "sLORETA" "eLORETA")
 # For task data, epoch both covariance outputs from step 06.
 TASK_COV_LABELS=("4" "15")
 
-# This controls which task baseline is copied to the compatibility
-# *_baseline-epo.fif file used by connectivity when --baseline-kind baseline.
-CONNECTIVITY_BASELINE="stim"
-
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
@@ -98,7 +94,7 @@ do
                     if [ -f "$OUTPUT_FILE" ]; then
                         echo "Skipping already epoched: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD cov-$PARAM_COV_LABEL $LABEL_KIND"
                     else
-                        echo "$SUB $SES $TASK $MODE $METHOD $PARAM_COV_LABEL $LABEL_KIND $CONNECTIVITY_BASELINE" >> "$PARAM_LIST"
+                        echo "$SUB $SES $TASK $MODE $METHOD $PARAM_COV_LABEL $LABEL_KIND" >> "$PARAM_LIST"
                     fi
                 done
             done

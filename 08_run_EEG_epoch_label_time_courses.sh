@@ -26,7 +26,7 @@ if [ -z "$CURRENT_FILE" ]; then
     exit 1
 fi
 
-read -r SUB SES TASK MODE METHOD COV_LABEL LABEL_KIND CONNECTIVITY_BASELINE <<< "$CURRENT_FILE"
+read -r SUB SES TASK MODE METHOD COV_LABEL LABEL_KIND <<< "$CURRENT_FILE"
 
 if [ -z "$MODE" ]; then
     MODE="surface"
@@ -42,10 +42,6 @@ fi
 
 if [ -z "$LABEL_KIND" ]; then
     LABEL_KIND="labels"
-fi
-
-if [ -z "$CONNECTIVITY_BASELINE" ]; then
-    CONNECTIVITY_BASELINE="stim"
 fi
 
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
@@ -79,7 +75,6 @@ echo "MODE = '$MODE'"
 echo "METHOD = '$METHOD'"
 echo "COV_LABEL = '$COV_LABEL'"
 echo "LABEL_KIND = '$LABEL_KIND'"
-echo "CONNECTIVITY_BASELINE = '$CONNECTIVITY_BASELINE'"
 echo "LABELS_FIF = '$LABELS_FIF'"
 echo "Processing ROI label epochs for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD label-$LABEL_KIND"
 
@@ -114,6 +109,5 @@ apptainer exec \
             --task "'"$TASK"'" \
             --mode "'"$MODE"'" \
             --method "'"$METHOD"'" \
-            --cov-label "'"$COV_LABEL"'" \
-            --connectivity-baseline "'"$CONNECTIVITY_BASELINE"'"
+            --cov-label "'"$COV_LABEL"'"
     '
