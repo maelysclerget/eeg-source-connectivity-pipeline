@@ -212,19 +212,6 @@ def make_rs_epochs(raw_labels, task_name, epoch_duration=5.0, s15_annotation="St
     )
 
 
-def make_rs_baseline_epochs(raw_labels, epoch_duration=5.0, baseline_duration=20.0):
-    """Create RSpre/RSpost baseline from the first 20 s as 5 s epochs."""
-    n_epochs = int(round(baseline_duration / epoch_duration))
-    return _fixed_epochs_from_block_starts(
-        raw_labels,
-        [(1, 0)],
-        "rs_baseline_first20",
-        epoch_duration,
-        n_epochs,
-        600,
-    )
-
-
 def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duration=5.0, task_duration=90.0):
     """Create one variable-length Epochs object per S10-to-next-S10 sequence interval."""
     sfreq = raw_labels.info["sfreq"]

@@ -20,7 +20,6 @@ import pandas as pd
 
 from utils08 import (
     labels_evoked_to_raw,
-    make_rs_baseline_epochs,
     make_rs_epochs,
     make_task_epochs,
     print_annotation_descriptions,
@@ -194,11 +193,6 @@ def process_label_epochs(args: argparse.Namespace) -> None:
     )
     rs_path = out_dir / f"{stem}_rs_s15_epochs-epo.fif"
     save_epochs(rs_epochs, rs_path)
-    save_epochs(rs_epochs, out_dir / f"{stem}_nonbaseline-epo.fif")
-
-    if task_lower in {"rspre", "rspost"}:
-        baseline_epochs = make_rs_baseline_epochs(raw_labels, epoch_duration=args.epoch_duration)
-        save_epochs(baseline_epochs, out_dir / f"{stem}_baseline-epo.fif")
 
 
 def parse_args() -> argparse.Namespace:
