@@ -5,13 +5,28 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
+derivatives_dir = "/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
+subject = "41Y01"
+session = "1"
+task = "task"
+mode = "surface"
+method = "MNE"
+label_kind = "labels"
+epoch_kind = "task_fixed"
 n_sources = 20
 
+base_tag = f"{subject}_ses{session}_task-{task}_src-{mode}_method-{method}"
+epochs_path = (
+    f"{derivatives_dir}/sub-{subject}/ses-{session}/{task}/epochs/{mode}/{method}/"
+    f"{base_tag}_{label_kind}_{epoch_kind}-epo.fif"
+)
+
 epochs = mne.read_epochs(
-    "/work/uphummel/studies/tTIS-EEG/derivatives/EEG/sub-41Y01/ses-1/task/epochs/surface/MNE/41Y01_ses1_task-task_src-surface_method-MNE_labels_task_fixed-epo.fif",
+    epochs_path,
     preload=True,
 )
 
+print(f"Opening: {epochs_path}")
 print(epochs.metadata[["condition", "block", "epoch_in_block", "duration_s"]])
 
 for block in sorted(epochs.metadata["block"].unique()):
@@ -30,5 +45,5 @@ for block in sorted(epochs.metadata["block"].unique()):
     plt.ylabel("ROI time course")
     plt.legend(fontsize=8)
     plt.tight_layout()
-    plt.savefig(f"block_{block}_average.png", dpi=300)
+    plt.savefig(f"{base_tag}_{epoch_kind}_block_{block}_average.png", dpi=300)
     plt.close()
