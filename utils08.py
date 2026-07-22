@@ -130,7 +130,7 @@ def _make_rs_segment_epochs(raw_labels, epoch_specs, event_prefix, epoch_duratio
         events=np.asarray(events, dtype=int),
         event_id=None,
         tmin=0.0,
-        tmax=epoch_duration / sfreq,
+        tmax=epoch_duration - 1.0 / sfreq,
         baseline=None,
         metadata=pd.DataFrame(metadata),
         preload=True,
@@ -236,7 +236,7 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duratio
                 events=np.array([[start_sample, 0, 1]], dtype=int),
                 event_id=None,
                 tmin=0.0,
-                tmax=duration / sfreq,
+                tmax=duration - 1.0 / sfreq,
                 baseline=None,
                 metadata=metadata,
                 preload=True,
@@ -251,4 +251,5 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duratio
 def save_epochs(epochs, path):
     """Save Epochs FIF."""
     epochs.save(path, overwrite=True)
-    print(f"Saved {len(epochs)} epochs: {path}")
+    duration = epochs.times[-1] - epochs.times[0] + 1.0 / epochs.info["sfreq"]
+    print(f"Saved {len(epochs)} epochs ({duration:.3f} s each): {path}")
