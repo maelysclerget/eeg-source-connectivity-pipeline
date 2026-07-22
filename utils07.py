@@ -28,18 +28,6 @@ def chmod_group(path: str | Path) -> None:
         print(f"Could not chmod {path}; continuing.")
 
 
-def base_tag(args: argparse.Namespace) -> str:
-    """Return the filename stem used by the step 06/08 outputs."""
-    tag = f"{args.subject}_ses{args.session}_task-{args.task}_src-{args.mode}_method-{args.method}"
-    if args.task.lower() == "task":
-        if not args.cov_label:
-            raise ValueError("task connectivity needs --cov-label, for example 15.")
-        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
-        tag = f"{tag}_cov-{cov_tag}"
-
-    return tag
-
-
 def epoch_base_tag(args: argparse.Namespace) -> str:
     """Return the filename stem used by step 08 epoch outputs."""
     return f"{args.subject}_ses{args.session}_task-{args.task}_src-{args.mode}_method-{args.method}"
@@ -47,34 +35,13 @@ def epoch_base_tag(args: argparse.Namespace) -> str:
 
 def connectivity_tag(args: argparse.Namespace) -> str:
     """Return the filename stem used for connectivity outputs."""
-    tag = base_tag(args)
+    tag = epoch_base_tag(args)
     baseline_kind = getattr(args, "baseline_kind", "baseline")
     if args.task.lower() == "task" and baseline_kind != "baseline":
         baseline_label = baseline_kind.replace("baseline_", "")
         tag = f"{tag}_baseline-{baseline_label}"
 
     return tag
-
-
-def inverse_directory(args: argparse.Namespace) -> Path:
-    """Return the inverse-solution directory from step 06."""
-    directory = (
-        Path(args.derivatives_dir)
-        / f"sub-{args.subject}"
-        / f"ses-{args.session}"
-        / "source_reconstruction"
-        / "inverse_solution"
-        / args.mode
-        / args.method
-    )
-
-    if args.task.lower() == "task":
-        if not args.cov_label:
-            raise ValueError("task connectivity needs --cov-label, for example 15.")
-        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
-        return directory / f"cov-{cov_tag}"
-
-    return directory / args.task
 
 
 def output_directory(args: argparse.Namespace) -> Path:
@@ -86,19 +53,13 @@ def output_directory(args: argparse.Namespace) -> Path:
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
         / f"ses-{args.session}"
-        / "source_reconstruction"
         / "connectivity"
         / args.mode
         / args.method
+        / args.task
     )
 
-    if args.task.lower() == "task":
-        if not args.cov_label:
-            raise ValueError("task connectivity needs --cov-label, for example 15.")
-        cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
-        return directory / f"cov-{cov_tag}"
-
-    return directory / args.task
+    return directory
 
 
 def read_roi_epochs(path: Path) -> tuple[np.ndarray, list[str], float]:

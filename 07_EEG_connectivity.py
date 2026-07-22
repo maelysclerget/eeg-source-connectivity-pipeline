@@ -16,6 +16,10 @@ For RSpre and other non-task recordings, the expected layout is:
 
     <task>/epochs/<mode>/<method>/
 
+Connectivity outputs are saved as:
+
+    connectivity/<mode>/<method>/<task>/
+
 The input channels are ROIs.
 """
 

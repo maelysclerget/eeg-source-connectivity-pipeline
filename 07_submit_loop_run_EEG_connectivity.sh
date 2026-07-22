@@ -1,8 +1,8 @@
 #!/bin/bash
 # Author Stavriani Skarvelaki / Maelys Clerget
 
-# Submit RSpre source-level EEG connectivity jobs as a SLURM array.
-# The script scans step 06 RSpre ROI outputs, checks whether the source
+# Submit source-level EEG connectivity jobs as a SLURM array.
+# The script scans step 08 ROI epoch outputs, checks whether the source
 # connectivity summary already exists, and submits one job per missing result.
 
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
@@ -19,9 +19,9 @@ METHODS=("MNE" "sLORETA" "eLORETA")
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
-echo "Scanning RSpre inverse-solution outputs in $DERIV_ROOT."
+echo "Scanning ROI epoch outputs in $DERIV_ROOT."
 
-find "$RAW_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg.vhdr" | sort | while read -r FILE
+find "$RAW_ROOT" -type f -name "sub-*_ses-*_task-*_eeg.vhdr" | sort | while read -r FILE
 do
     BASENAME=$(basename "$FILE")
 
@@ -29,7 +29,7 @@ do
     SES=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-([^_]+)_task-.*/\1/')
     TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
 
-    if [ "$TASK" != "RSpre" ]; then
+    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ] && [ "$TASK" != "RSpost" ] && [ "$TASK" != "RSstim" ]; then
         continue
     fi
 
@@ -37,29 +37,48 @@ do
     do
         for METHOD in "${METHODS[@]}"
         do
-            INVERSE_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/RSpre"
-            CONNECTIVITY_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/connectivity/$MODE/$METHOD/RSpre"
+            EPOCH_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/epochs/$MODE/$METHOD"
+            CONNECTIVITY_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/connectivity/$MODE/$METHOD/$TASK"
             BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
 
-            if [ "$MODE" = "mixed" ]; then
-                INPUT_FILE="$INVERSE_DIR/${BASE_TAG}_surface_labels.fif"
-                INPUT_FILE_2="$INVERSE_DIR/${BASE_TAG}_volume_labels.fif"
+            if [ "$TASK" = "task" ]; then
+                OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_baseline-stim_connectivity_summary.csv"
+                if [ "$MODE" = "mixed" ]; then
+                    INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_task_fixed-epo.fif"
+                    INPUT_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_task_fixed-epo.fif"
+                    BASELINE_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_baseline_stim-epo.fif"
+                    BASELINE_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_baseline_stim-epo.fif"
+                else
+                    INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_labels_task_fixed-epo.fif"
+                    INPUT_FILE_2=""
+                    BASELINE_FILE="$EPOCH_DIR/${BASE_TAG}_labels_baseline_stim-epo.fif"
+                    BASELINE_FILE_2=""
+                fi
             else
-                INPUT_FILE="$INVERSE_DIR/${BASE_TAG}_labels.fif"
-                INPUT_FILE_2=""
+                OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_connectivity_summary.csv"
+                if [ "$MODE" = "mixed" ]; then
+                    INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_rs_s15_epochs-epo.fif"
+                    INPUT_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_rs_s15_epochs-epo.fif"
+                else
+                    INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_labels_rs_s15_epochs-epo.fif"
+                    INPUT_FILE_2=""
+                fi
+                BASELINE_FILE=""
+                BASELINE_FILE_2=""
             fi
 
-            if [ ! -f "$INPUT_FILE" ] || { [ -n "$INPUT_FILE_2" ] && [ ! -f "$INPUT_FILE_2" ]; }; then
-                echo "Skipping missing RSpre ROI time course: sub-$SUB ses-$SES mode-$MODE method-$METHOD"
+            if [ ! -f "$INPUT_FILE" ] || \
+               { [ -n "$INPUT_FILE_2" ] && [ ! -f "$INPUT_FILE_2" ]; } || \
+               { [ -n "$BASELINE_FILE" ] && [ ! -f "$BASELINE_FILE" ]; } || \
+               { [ -n "$BASELINE_FILE_2" ] && [ ! -f "$BASELINE_FILE_2" ]; }; then
+                echo "Skipping missing ROI epochs: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
                 continue
             fi
-
-            OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_connectivity_summary.csv"
 
             if [ -f "$OUTPUT_FILE" ]; then
                 echo "Skipping already processed: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
             else
-                echo "$SUB $SES $TASK $MODE $METHOD" >> "$PARAM_LIST"
+                echo "$SUB $SES $TASK $MODE $METHOD 15 baseline_stim" >> "$PARAM_LIST"
             fi
         done
     done
