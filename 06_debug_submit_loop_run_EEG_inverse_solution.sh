@@ -16,8 +16,8 @@ mkdir -p "$LOG_DIR"
 # ---- ONE TEST SUBJECT ----
 SUB="41Y01"
 SES="1"
-TASK="RSstim"
-MODES=("surface" "volume" "mixed")
+TASK="task"
+MODES=("mixed")
 METHOD="MNE"
 COV_DURATION="20.0"
 

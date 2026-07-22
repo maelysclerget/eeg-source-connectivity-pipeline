@@ -72,7 +72,7 @@ def _task_blocks_from_s15_s10(s15_events, s10_events):
     return blocks
 
 
-def _fixed_epochs_from_block_starts(raw_labels, block_starts, condition, epoch_duration, epochs_per_block, event_base): # we don't have the code but know the start sample: Task non-stim baseline, Task stim baseline, Task fixed block, RSpre / RSpost
+def _fixed_epochs_from_block_starts(raw_labels, block_starts, condition, epoch_duration, epochs_per_block, event_base): # we don't have the code but know the start sample: Task non-stim baseline, Task stim baseline, Task fixed epochblock
     """Create fixed-length epochs and keep block labels in metadata."""
     sfreq = raw_labels.info["sfreq"]
     epoch_samples = int(round(epoch_duration * sfreq)) #converts epoch duration from seconds into samples
@@ -138,7 +138,7 @@ def _fixed_epochs_from_events(raw_labels, epoch_specs, condition, epoch_duration
         events=np.asarray(events, dtype=int),
         event_id=event_id,
         tmin=0.0,
-        tmax=epoch_duration - 1.0 / sfreq,
+        tmax=epoch_duration / sfreq,
         baseline=None,
         metadata=pd.DataFrame(metadata),
         preload=True,
@@ -246,7 +246,7 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duratio
                 events=np.array([[start_sample, 0, next(iter(event_id.values()))]], dtype=int),
                 event_id=event_id,
                 tmin=0.0,
-                tmax=duration - 1.0 / sfreq,
+                tmax=duration / sfreq,
                 baseline=None,
                 metadata=metadata,
                 preload=True,
