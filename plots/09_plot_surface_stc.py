@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Author Stavriani Skarvelaki / Maelys Clerget
+# Run it with sbatch 09_run_plot_surface_stc.sh
 
 """Save a static plot of the full morphed fsaverage STC."""
 

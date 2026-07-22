@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Author Stavriani Skarvelaki / Maelys Clerget
+# Run it with sbatch 09_run_plot_volume_stc.sh
+
 
 """Save a static plot of the volume source estimate."""
 

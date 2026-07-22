@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Run this on 'on demand'
 """
 Visualize MNE inverse-solution FIF outputs.
 
