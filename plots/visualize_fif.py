@@ -10,6 +10,7 @@ Run with:
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import mne
 
 
@@ -18,6 +19,7 @@ session = "1"
 mode = "surface"
 method = "MNE"
 cov = "cov-s15"
+n_rois_to_plot = 20
 
 subject_fs = f"sub-{subject}_ses-baseline"
 
@@ -155,7 +157,23 @@ def show_labels():
             print("\nReconstructed ROI EvokedArray:")
             print(evoked_array)
 
-            evoked.plot(spatial_colors=False, show=False)
+            n_rois = min(n_rois_to_plot, len(roi_names))
+            colors = plt.cm.tab20(np.linspace(0, 1, n_rois))
+
+            fig, ax = plt.subplots(figsize=(12, 6))
+            for roi_index, color in enumerate(colors):
+                ax.plot(
+                    evoked.times,
+                    roi_data[roi_index],
+                    color=color,
+                    label=roi_names[roi_index],
+                )
+
+            ax.set_title(f"ROI label time courses ({n_rois} ROIs)")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("AU")
+            ax.legend(fontsize=8, ncol=2)
+            fig.tight_layout()
         return
     mne.io.show_fiff(labels_path)
 
