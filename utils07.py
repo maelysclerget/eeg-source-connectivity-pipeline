@@ -49,7 +49,7 @@ def output_directory(args: argparse.Namespace) -> Path:
     if args.output_dir:
         return Path(args.output_dir)
 
-    directory = (
+    return (
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
         / f"ses-{args.session}"
@@ -58,8 +58,6 @@ def output_directory(args: argparse.Namespace) -> Path:
         / args.method
         / args.task
     )
-
-    return directory
 
 
 def read_roi_epochs(path: Path) -> tuple[np.ndarray, list[str], float]:
@@ -145,17 +143,11 @@ def load_roi_epochs(args: argparse.Namespace, kind: str) -> tuple[np.ndarray, li
 
 def compute_connectivity(roi_data: np.ndarray, sfreq: float, fmin: float, fmax: float, method: str) -> np.ndarray:
     """Compute all-to-all spectral connectivity between ROI time series."""
-    if roi_data.ndim == 2:
-        # Convert n_ROIs x n_times into 1 epoch x n_ROIs x n_times.
-        connectivity_input = roi_data[np.newaxis, :, :]
-    elif roi_data.ndim == 3:
-        # Epoch files are already n_epochs x n_ROIs x n_times.
-        connectivity_input = roi_data
-    else:
-        raise ValueError(f"Expected 2D or 3D ROI data, got shape {roi_data.shape}.")
+    if roi_data.ndim != 3:
+        raise ValueError(f"Expected epochs as n_epochs x n_ROIs x n_times, got shape {roi_data.shape}.")
 
     con = spectral_connectivity_epochs(
-        connectivity_input,
+        roi_data,
         method=method,
         mode="multitaper",
         sfreq=sfreq,

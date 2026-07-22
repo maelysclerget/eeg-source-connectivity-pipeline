@@ -8,11 +8,7 @@ This script reads the ROI Epochs FIF files created by
 08_EEG_epoch_label_time_courses.py and computes baseline-corrected
 ROI x ROI imaginary coherence matrices.
 
-For task, the expected epoch layout is:
-
-    <task>/epochs/<mode>/<method>/
-
-For RSpre and other non-task recordings, the expected layout is:
+Epoch inputs are read from:
 
     <task>/epochs/<mode>/<method>/
 
@@ -58,16 +54,6 @@ INVERSE_METHODS = ("MNE", "sLORETA", "eLORETA")
 SOURCE_MODES = ("surface", "volume", "mixed")
 
 
-def selected_frequency_bands(args: argparse.Namespace) -> list[str]:
-    """Return requested frequency bands after checking their names."""
-    selected_bands = args.bands if args.bands else list(BANDS)
-    invalid_bands = [band for band in selected_bands if band not in BANDS]
-    if invalid_bands:
-        raise ValueError(f"Unknown band(s): {invalid_bands}. Available bands: {list(BANDS)}")
-
-    return selected_bands
-
-
 def append_summary_row(
     summary_rows: list[dict],
     band_name: str,
@@ -102,7 +88,7 @@ def append_summary_row(
 
 def process_connectivity(args: argparse.Namespace) -> None:
     """Compute ROI-level connectivity for every selected frequency band."""
-    selected_bands = selected_frequency_bands(args)
+    selected_bands = args.bands if args.bands else list(BANDS)
 
     out_dir = output_directory(args)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -293,7 +279,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task", default="RSpre", help="Task to process, for example RSpre or task.")
     parser.add_argument("--mode", default="surface", choices=SOURCE_MODES, help="Source-space mode.")
     parser.add_argument("--method", default="MNE", choices=INVERSE_METHODS, help="Inverse method.")
-    parser.add_argument("--cov-label", default="15", help="Covariance label for task outputs. Default: 15.")
     parser.add_argument("--derivatives-dir", default=str(EEG_DERIVATIVES_DIR), help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional explicit output directory.")
     parser.add_argument("--bands", nargs="+", choices=list(BANDS), default=None, help="Bands to compute. Default: all.")

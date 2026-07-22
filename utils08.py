@@ -19,18 +19,22 @@ def print_annotation_descriptions(annotations):
         print(f"  {description}: {count}")
 
 
-def labels_evoked_to_raw(evoked, annotations=None):
+def labels_evoked_to_raw(evoked, annotations):
     """Wrap labels EvokedArray data as RawArray for MNE epoching functions."""
+    # evoked.data is the continuous source/ROI labels time course.
+    # Convert it to RawArray because MNE epochs Raw objects, not Evoked objects.
     raw_labels = mne.io.RawArray(evoked.data, evoked.info.copy(), verbose="ERROR") #temporarily converts labels.fif to raw obj
 
-    if annotations is not None:
-        annotations = mne.Annotations(
-            onset=annotations.onset,
-            duration=annotations.duration,
-            description=annotations.description,
-            orig_time=None,
-        )
-        raw_labels.set_annotations(annotations)
+    # These annotations come from the preprocessed raw EEG file.
+    # Attach them to the source/ROI time course so MNE knows where to epoch it.
+    annotations = mne.Annotations(
+        onset=annotations.onset,
+        duration=annotations.duration,
+        description=annotations.description,
+        orig_time=None,
+    )
+    # This is the line that puts the raw EEG annotations onto labels.fif data.
+    raw_labels.set_annotations(annotations)
 
     return raw_labels
 
@@ -58,8 +62,10 @@ def _task_blocks_from_s15_s10(s15_events, s10_events):
     """Return task blocks defined by each S15 and the first following S10."""
     blocks = []
     for block_index, s15_event in enumerate(s15_events, start=1):
-        s15_sample = int(s15_event[0])
-        s10_sample = int(s10_events[block_index - 1, 0])
+        s15_sample = int(s15_event[0]) # S15 sample
+        # block_index starts at 1, but Python indices start at 0.
+        # Example: block 1 uses s10_events[0].
+        s10_sample = int(s10_events[block_index - 1, 0]) # S10 sample
 
         blocks.append(
             {
@@ -73,7 +79,7 @@ def _task_blocks_from_s15_s10(s15_events, s10_events):
 
 
 def _make_task_block_epochs(raw_labels, block_starts, condition, epoch_duration, epochs_per_block):
-    """Create fixed-length epochs and keep block labels in metadata."""
+    """Used for task only: create baseline and fixed task block epochs."""
     sfreq = raw_labels.info["sfreq"]
     epoch_samples = int(round(epoch_duration * sfreq)) #converts epoch duration from seconds into samples
     events = []
@@ -97,6 +103,8 @@ def _make_task_block_epochs(raw_labels, block_starts, condition, epoch_duration,
         events=np.asarray(events, dtype=int),
         event_id=None,
         tmin=0.0,
+        # MNE includes tmax, so subtract one sample.
+        # Example: 5 s at 1000 Hz -> 5 - 1/1000 = 4.999 s.
         tmax=epoch_duration - 1.0 / sfreq,
         baseline=None,
         metadata=pd.DataFrame(metadata),
@@ -109,7 +117,7 @@ def _make_task_block_epochs(raw_labels, block_starts, condition, epoch_duration,
 
 
 def _make_rs_segment_epochs(raw_labels, epoch_specs, event_prefix, epoch_duration):
-    """Create fixed-length RS epochs from explicit starts with segment metadata."""
+    """Used for RSpre/RSpost/RSstim only: create fixed epochs inside S15 segments."""
     sfreq = raw_labels.info["sfreq"]
     events = []
     metadata = []
@@ -130,6 +138,8 @@ def _make_rs_segment_epochs(raw_labels, epoch_specs, event_prefix, epoch_duratio
         events=np.asarray(events, dtype=int),
         event_id=None,
         tmin=0.0,
+        # MNE includes tmax, so subtract one sample.
+        # Example: 5 s at 1000 Hz -> 5 - 1/1000 = 4.999 s.
         tmax=epoch_duration - 1.0 / sfreq,
         baseline=None,
         metadata=pd.DataFrame(metadata),
@@ -141,23 +151,18 @@ def _make_rs_segment_epochs(raw_labels, epoch_specs, event_prefix, epoch_duratio
     )
 
 
-def make_task_epochs(
-    raw_labels,
-    epoch_duration=5.0,
-    s15_annotation="Stimulus/S 15",
-    block_start_annotation="Stimulus/S 10",
-):
-    """Create requested 5 s task baseline, fixed-block, and sequence epochs."""
+def make_task_epochs(raw_labels, epoch_duration=5.0, s15_annotation="Stimulus/S 15", block_start_annotation="Stimulus/S 10"):
+    """Used for task only: create baseline, fixed-task, and sequence epochs."""
     events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR") 
     print("Event IDs found:", event_id)
 
-    s15_events, _ = _events_for_annotation(events, event_id, s15_annotation)
-    s10_events, _ = _events_for_annotation(events, event_id, block_start_annotation)
+    s15_events, _ = _events_for_annotation(events, event_id, s15_annotation) # Get S15 events
+    s10_events, _ = _events_for_annotation(events, event_id, block_start_annotation) # Get S10 events
 
     sfreq = raw_labels.info["sfreq"]
-    task_blocks = _task_blocks_from_s15_s10(s15_events, s10_events)
+    task_blocks = _task_blocks_from_s15_s10(s15_events, s10_events) # Each block has block number, S15 sample, and S10 sample
 
-    no_stim_starts = [(block["block"], block["s15"] - int(round(20.0 * sfreq))) for block in task_blocks]
+    no_stim_starts = [(block["block"], block["s15"] - int(round(20.0 * sfreq))) for block in task_blocks] #
     stim_starts = [(block["block"], block["s15"]) for block in task_blocks]
     fixed_task_starts = [(block["block"], block["s10"]) for block in task_blocks]
 
@@ -171,17 +176,17 @@ def make_task_epochs(
         raw_labels, fixed_task_starts, "task_fixed", epoch_duration, 18
     )
     sequence_epochs = make_task_sequence_epochs(
-        raw_labels, task_blocks, s10_events, epoch_duration, task_duration=90.0
+        raw_labels, task_blocks, s10_events, task_duration=90.0
     )
 
     return baseline_no_stim_epochs, baseline_stim_epochs, fixed_task_epochs, sequence_epochs
 
 
 def make_rs_epochs(raw_labels, task_name, epoch_duration=5.0, s15_annotation="Stimulus/S 15"):
-    """Create 5 s resting-state epochs after S15 and keep S15 segment labels."""
-    events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR")
+    """Used for RSpre/RSpost/RSstim only: create 5 s epochs after S15."""
+    events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR") # Get all events
     print("Event IDs found:", event_id)
-    s15_events, _ = _events_for_annotation(events, event_id, s15_annotation)
+    s15_events, _ = _events_for_annotation(events, event_id, s15_annotation) # Get S15 events
 
     sfreq = raw_labels.info["sfreq"]
     recording_end_sample = raw_labels.n_times - 1
@@ -190,9 +195,17 @@ def make_rs_epochs(raw_labels, task_name, epoch_duration=5.0, s15_annotation="St
 
     for segment_index, s15_event in enumerate(s15_events, start=1):
         start_sample = int(s15_event[0])
-        next_s15_sample = int(s15_events[segment_index, 0]) if segment_index < len(s15_events) else recording_end_sample
-        n_epochs = max(0, (next_s15_sample - start_sample) // epoch_samples)
+        # Each RS segment starts at one S15 and stops at the next S15.
+        # The last segment stops at the end of the recording.
+        if segment_index < len(s15_events): #checks whether there is a next S15 event after the current one
+            next_s15_sample = int(s15_events[segment_index, 0])
+        else:
+            next_s15_sample = recording_end_sample
+
+        n_epochs = max(0, (next_s15_sample - start_sample) // epoch_samples) # Integer division, max makes sure result is never negative
         for epoch_in_segment in range(1, n_epochs + 1):
+            # Example: start=1000, epoch_samples=1250.
+            # Epoch 1 starts at 1000 + (1 - 1) * 1250 = 1000. Epoch 2 starts at 1000 + (2 - 1) * 1250 = 2250.
             epoch_specs.append((segment_index, epoch_in_segment, start_sample + (epoch_in_segment - 1) * epoch_samples))
 
     return _make_rs_segment_epochs(
@@ -203,9 +216,10 @@ def make_rs_epochs(raw_labels, task_name, epoch_duration=5.0, s15_annotation="St
     )
 
 
-def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duration=5.0, task_duration=90.0):
-    """Create one variable-length Epochs object per S10-to-next-S10 sequence interval."""
+def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, task_duration=90.0):
+    """Used for task only: create one variable-length epoch per task sequence."""
     sfreq = raw_labels.info["sfreq"]
+    # Convert the expected task block duration from seconds to samples.
     task_samples = int(round(task_duration * sfreq))
     sequence_epochs = []
 
@@ -213,13 +227,15 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duratio
         block_number = block["block"]
         task_start = block["s10"]
         task_stop = task_start + task_samples
-        block_s10 = [int(event[0]) for event in s10_events if task_start <= int(event[0]) < task_stop]
+        block_s10 = [int(event[0]) for event in s10_events if task_start <= int(event[0]) < task_stop]  # Take the sample of each S10 event from the start of this task block until the end of this task block.
 
         for sequence_index, start_sample in enumerate(block_s10, start=1):
+            # A sequence stops at the next S10, or at the end of the task block if it is the last sequence in that block.
             if sequence_index < len(block_s10):
                 stop_sample = block_s10[sequence_index]
             else:
                 stop_sample = task_stop
+            # This duration can differ between sequences, so each sequence is saved as a separate Epochs file.
             duration = (stop_sample - start_sample) / sfreq
             metadata = pd.DataFrame(
                 [
@@ -236,6 +252,8 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duratio
                 events=np.array([[start_sample, 0, 1]], dtype=int),
                 event_id=None,
                 tmin=0.0,
+                # MNE includes tmax, so subtract one sample.
+                # Example: 5 s at 1000 Hz -> 5 - 1/1000 = 4.999 s.
                 tmax=duration - 1.0 / sfreq,
                 baseline=None,
                 metadata=metadata,
@@ -251,5 +269,6 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, epoch_duratio
 def save_epochs(epochs, path):
     """Save Epochs FIF."""
     epochs.save(path, overwrite=True)
+    # Real duration = last time - first time + one sample. times[0]  = 0.000 times[-1] = 4.999 & 4.999 + 0.001 = 5.000 s
     duration = epochs.times[-1] - epochs.times[0] + 1.0 / epochs.info["sfreq"]
     print(f"Saved {len(epochs)} epochs ({duration:.3f} s each): {path}")

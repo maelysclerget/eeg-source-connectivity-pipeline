@@ -26,7 +26,7 @@ if [ -z "$CURRENT_FILE" ]; then
     exit 1
 fi
 
-read -r SUB SES TASK MODE METHOD COV_LABEL BASELINE_KIND <<< "$CURRENT_FILE"
+read -r SUB SES TASK MODE METHOD BASELINE_KIND <<< "$CURRENT_FILE"
 
 if [ -z "$MODE" ]; then
     MODE="surface"
@@ -34,10 +34,6 @@ fi
 
 if [ -z "$METHOD" ]; then
     METHOD="MNE"
-fi
-
-if [ -z "$COV_LABEL" ]; then
-    COV_LABEL="15"
 fi
 
 if [ -z "$BASELINE_KIND" ]; then
@@ -49,7 +45,6 @@ echo "SES = '$SES'"
 echo "TASK = '$TASK'"
 echo "MODE = '$MODE'"
 echo "METHOD = '$METHOD'"
-echo "COV_LABEL = '$COV_LABEL'"
 echo "BASELINE_KIND = '$BASELINE_KIND'"
 echo "Processing source EEG connectivity for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
 
@@ -78,6 +73,5 @@ apptainer exec \
             --task "'"$TASK"'" \
             --mode "'"$MODE"'" \
             --method "'"$METHOD"'" \
-            --cov-label "'"$COV_LABEL"'" \
             --baseline-kind "'"$BASELINE_KIND"'"
     '

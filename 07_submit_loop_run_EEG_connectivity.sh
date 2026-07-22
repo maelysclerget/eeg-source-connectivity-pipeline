@@ -15,6 +15,9 @@ RUN_SCRIPT="/home/clerget/Scripts/code/07_run_EEG_connectivity.sh"
 # Choose source space and inverse methods here.
 MODES=("surface" "volume" "mixed")
 METHODS=("MNE" "sLORETA" "eLORETA")
+BASELINE_KINDS=("baseline_stim")
+# To run both task baselines, use:
+# BASELINE_KINDS=("baseline_stim" "baseline_no_stim")
 
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
@@ -42,18 +45,36 @@ do
             BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
 
             if [ "$TASK" = "task" ]; then
-                OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_baseline-stim_connectivity_summary.csv"
-                if [ "$MODE" = "mixed" ]; then
-                    INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_task_fixed-epo.fif"
-                    INPUT_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_task_fixed-epo.fif"
-                    BASELINE_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_baseline_stim-epo.fif"
-                    BASELINE_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_baseline_stim-epo.fif"
-                else
-                    INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_labels_task_fixed-epo.fif"
-                    INPUT_FILE_2=""
-                    BASELINE_FILE="$EPOCH_DIR/${BASE_TAG}_labels_baseline_stim-epo.fif"
-                    BASELINE_FILE_2=""
-                fi
+                for BASELINE_KIND in "${BASELINE_KINDS[@]}"
+                do
+                    BASELINE_LABEL=${BASELINE_KIND#baseline_}
+                    OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_baseline-${BASELINE_LABEL}_connectivity_summary.csv"
+                    if [ "$MODE" = "mixed" ]; then
+                        INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_task_fixed-epo.fif"
+                        INPUT_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_task_fixed-epo.fif"
+                        BASELINE_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_${BASELINE_KIND}-epo.fif"
+                        BASELINE_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_${BASELINE_KIND}-epo.fif"
+                    else
+                        INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_labels_task_fixed-epo.fif"
+                        INPUT_FILE_2=""
+                        BASELINE_FILE="$EPOCH_DIR/${BASE_TAG}_labels_${BASELINE_KIND}-epo.fif"
+                        BASELINE_FILE_2=""
+                    fi
+
+                    if [ ! -f "$INPUT_FILE" ] || \
+                       { [ -n "$INPUT_FILE_2" ] && [ ! -f "$INPUT_FILE_2" ]; } || \
+                       { [ -n "$BASELINE_FILE" ] && [ ! -f "$BASELINE_FILE" ]; } || \
+                       { [ -n "$BASELINE_FILE_2" ] && [ ! -f "$BASELINE_FILE_2" ]; }; then
+                        echo "Skipping missing ROI epochs: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD baseline-$BASELINE_KIND"
+                        continue
+                    fi
+
+                    if [ -f "$OUTPUT_FILE" ]; then
+                        echo "Skipping already processed: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD baseline-$BASELINE_KIND"
+                    else
+                        echo "$SUB $SES $TASK $MODE $METHOD $BASELINE_KIND" >> "$PARAM_LIST"
+                    fi
+                done
             else
                 OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_connectivity_summary.csv"
                 if [ "$MODE" = "mixed" ]; then
@@ -63,22 +84,17 @@ do
                     INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_labels_rs_s15_epochs-epo.fif"
                     INPUT_FILE_2=""
                 fi
-                BASELINE_FILE=""
-                BASELINE_FILE_2=""
-            fi
 
-            if [ ! -f "$INPUT_FILE" ] || \
-               { [ -n "$INPUT_FILE_2" ] && [ ! -f "$INPUT_FILE_2" ]; } || \
-               { [ -n "$BASELINE_FILE" ] && [ ! -f "$BASELINE_FILE" ]; } || \
-               { [ -n "$BASELINE_FILE_2" ] && [ ! -f "$BASELINE_FILE_2" ]; }; then
-                echo "Skipping missing ROI epochs: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
-                continue
-            fi
+                if [ ! -f "$INPUT_FILE" ] || { [ -n "$INPUT_FILE_2" ] && [ ! -f "$INPUT_FILE_2" ]; }; then
+                    echo "Skipping missing ROI epochs: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
+                    continue
+                fi
 
-            if [ -f "$OUTPUT_FILE" ]; then
-                echo "Skipping already processed: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
-            else
-                echo "$SUB $SES $TASK $MODE $METHOD 15 baseline_stim" >> "$PARAM_LIST"
+                if [ -f "$OUTPUT_FILE" ]; then
+                    echo "Skipping already processed: sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
+                else
+                    echo "$SUB $SES $TASK $MODE $METHOD baseline_stim" >> "$PARAM_LIST"
+                fi
             fi
         done
     done

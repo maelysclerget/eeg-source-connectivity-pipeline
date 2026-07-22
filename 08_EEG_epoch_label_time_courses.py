@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 from pathlib import Path
 
 import mne
@@ -30,16 +29,6 @@ from utils08 import (
 
 DERIVATIVES_DIR = "/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
-# Defaults used when running:
-#     python 08_EEG_epoch_label_time_courses.py
-subject = "41Y01"
-session = "1"
-task = "task"
-mode = "surface"
-method = "MNE"
-cov_label = "15"
-labels_fif = None
-
 
 def chmod_group(path: str | Path) -> None:
     """Keep cluster outputs group-readable/writable when possible."""
@@ -54,6 +43,7 @@ def get_raw_fif_path(args: argparse.Namespace) -> Path:
     stem = f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
     filename = f"{stem}_eeg_not_interpolated_final_preprocessed_eeg.fif"
 
+    # This raw EEG file is used only to get annotations, not for source data.
     raw_path = (
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
@@ -70,6 +60,7 @@ def get_raw_fif_path(args: argparse.Namespace) -> Path:
 
 def default_labels_fif_path(args: argparse.Namespace) -> Path:
     """Return the default labels FIF path from the step 06 output layout."""
+    # This labels FIF is the source/ROI time course file that will be epoched.
     inverse_dir = (
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
@@ -82,12 +73,7 @@ def default_labels_fif_path(args: argparse.Namespace) -> Path:
 
     base_tag = f"{args.subject}_ses{args.session}_task-{args.task}_src-{args.mode}_method-{args.method}"
     if args.task.lower() == "task":
-        if not args.cov_label:
-            raise ValueError("task epoching needs --cov-label, e.g. 15.")
         cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
-        labels_fif = inverse_dir / f"cov-{cov_tag}" / f"{base_tag}_cov-{cov_tag}_labels.fif"
-        if labels_fif.exists():
-            return labels_fif
         return inverse_dir / "task" / f"cov{cov_tag}" / f"{base_tag}_cov-{cov_tag}_labels.fif"
 
     return inverse_dir / args.task / f"{base_tag}_labels.fif"
@@ -95,6 +81,7 @@ def default_labels_fif_path(args: argparse.Namespace) -> Path:
 
 def default_output_dir(args: argparse.Namespace) -> Path:
     """Return the new epoch output directory in the subject/session task folder."""
+    # Epoch files are saved in the task folder
     return (
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
@@ -106,22 +93,20 @@ def default_output_dir(args: argparse.Namespace) -> Path:
     )
 
 
-def epoch_output_stem(labels_path: Path, args: argparse.Namespace) -> str:
-    """Return the epoch filename stem, without covariance tags for task outputs."""
-    stem = labels_path.stem
-    if args.task.lower() == "task":
-        stem = re.sub(r"_cov-s?[^_]+", "", stem, count=1)
-    return stem
+def epoch_output_stem(args: argparse.Namespace) -> str:
+    """Return the epoch filename stem."""
+    return f"{args.subject}_ses{args.session}_task-{args.task}_src-{args.mode}_method-{args.method}"
 
 
 def save_annotation_sidecar(raw_path: Path, out_dir: Path, stem: str) -> mne.Annotations:
     """Load raw annotations, print them, and save them next to labels epochs."""
     print("\nOpening raw FIF for annotations:")
     print(raw_path)
-    raw = mne.io.read_raw_fif(raw_path, preload=False, verbose="ERROR")
-    annotations = raw.annotations
+    raw = mne.io.read_raw_fif(raw_path, preload=False, verbose="ERROR") 
+    annotations = raw.annotations # Reads annotations of raw preprocessed EEG
     print_annotation_descriptions(annotations)
 
+    # Save the raw annotations next to the epochs for checking/debugging.
     sidecar_path = out_dir / f"{stem}_annot.fif"
     annotations.save(sidecar_path, overwrite=True)
     chmod_group(sidecar_path)
@@ -134,6 +119,7 @@ def save_sequence_epochs(sequence_epochs, out_dir: Path, stem: str) -> None:
     """Save variable-length sequence epochs as one FIF per sequence interval."""
     rows = []
     for block, sequence, duration, epochs in sequence_epochs:
+        # Sequence epochs can have different durations, so each is saved separately.
         path = out_dir / f"{stem}_task_sequence_block-{block:02d}_seq-{sequence:02d}-epo.fif"
         save_epochs(epochs, path)
         chmod_group(path)
@@ -146,6 +132,7 @@ def save_sequence_epochs(sequence_epochs, out_dir: Path, stem: str) -> None:
             }
         )
 
+    # Index file lists all separate sequence epoch files and their durations.
     index_path = out_dir / f"{stem}_task_sequence_index.csv"
     pd.DataFrame(rows).to_csv(index_path, index=False)
     chmod_group(index_path)
@@ -173,12 +160,14 @@ def process_label_epochs(args: argparse.Namespace) -> None:
 
     task_lower = args.task.lower()
     raw_path = get_raw_fif_path(args)
-    stem = epoch_output_stem(labels_path, args)
+    stem = epoch_output_stem(args)
     annotations = save_annotation_sidecar(raw_path, out_dir, stem)
 
+    # Convert continuous ROI time courses to RawArray so MNE can epoch them.
     raw_labels = labels_evoked_to_raw(evoked, annotations=annotations)
 
     if task_lower == "task":
+        # Task creates baseline epochs, fixed 5 s task epochs, and sequence epochs.
         baseline_no_stim_epochs, baseline_stim_epochs, fixed_task_epochs, sequence_epochs = make_task_epochs(
             raw_labels,
             epoch_duration=args.epoch_duration,
@@ -195,6 +184,7 @@ def process_label_epochs(args: argparse.Namespace) -> None:
         save_sequence_epochs(sequence_epochs, out_dir, stem)
         return
 
+    # RSpre/RSpost/RSstim creates fixed 5 s epochs after S15.
     rs_epochs = make_rs_epochs(
         raw_labels,
         task_name=args.task,
@@ -209,13 +199,13 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Epoch ROI labels FIF files for task or RSpre source connectivity."
     )
-    parser.add_argument("--labels-fif", default=labels_fif, help="Input ROI labels FIF saved as EvokedArray.")
-    parser.add_argument("--subject", default=subject, help="Subject ID without sub- prefix, e.g. 41Y01.")
-    parser.add_argument("--session", default=session, help="Session ID without ses- prefix, e.g. 1.")
-    parser.add_argument("--task", default=task, help="Task to epoch.")
-    parser.add_argument("--mode", default=mode, help="Source space mode used for the labels FIF.")
-    parser.add_argument("--method", default=method, help="Inverse method used for the labels FIF.")
-    parser.add_argument("--cov-label", default=cov_label, help="Task covariance label, e.g. 15.")
+    parser.add_argument("--labels-fif", default=None, help="Input ROI labels FIF saved as EvokedArray.")
+    parser.add_argument("--subject", default="41Y01", help="Subject ID without sub- prefix, e.g. 41Y01.")
+    parser.add_argument("--session", default="1", help="Session ID without ses- prefix, e.g. 1.")
+    parser.add_argument("--task", default="task", help="Task to epoch.")
+    parser.add_argument("--mode", default="surface", help="Source space mode used for the labels FIF.")
+    parser.add_argument("--method", default="MNE", help="Inverse method used for the labels FIF.")
+    parser.add_argument("--cov-label", default="15", help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: task/epochs/mode/method.")
     parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="S15 annotation used for RS blocks and task baselines.")

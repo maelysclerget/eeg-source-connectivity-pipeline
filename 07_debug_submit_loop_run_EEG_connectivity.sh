@@ -14,11 +14,18 @@ SES="1"
 TASK="RSstim"
 MODES=("surface" "volume" "mixed")
 METHOD="MNE"
-COV_LABEL="15"
-BASELINE_KIND="baseline_stim"
+BASELINE_KINDS=("baseline_stim")
+# To test both task baselines, use:
+# BASELINE_KINDS=("baseline_stim" "baseline_no_stim")
 
 for MODE in "${MODES[@]}"; do
-    echo "$SUB $SES $TASK $MODE $METHOD $COV_LABEL $BASELINE_KIND" >> "$PARAM_LIST"
+    if [ "$TASK" = "task" ]; then
+        for BASELINE_KIND in "${BASELINE_KINDS[@]}"; do
+            echo "$SUB $SES $TASK $MODE $METHOD $BASELINE_KIND" >> "$PARAM_LIST"
+        done
+    else
+        echo "$SUB $SES $TASK $MODE $METHOD baseline_stim" >> "$PARAM_LIST"
+    fi
 done
 
 echo "Added test source-connectivity job:"
