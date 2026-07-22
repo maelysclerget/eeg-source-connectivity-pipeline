@@ -20,9 +20,10 @@ task = "task"
 mode = "surface"
 method = "MNE"
 cov = "s15"
-n_rois_to_plot = 20
+rois_per_plot = 10
 
 subject_fs = f"sub-{subject}_ses-baseline"
+script_dir = Path(__file__).resolve().parent
 
 source_reconstruction_dir = Path(f"/work/uphummel/studies/tTIS-EEG/derivatives/EEG/sub-{subject}/ses-{session}/source_reconstruction")
 
@@ -150,23 +151,32 @@ def show_labels():
             print("\nReconstructed ROI EvokedArray:")
             print(evoked_array)
 
-            n_rois = min(n_rois_to_plot, len(roi_names))
-            colors = plt.cm.tab20(np.linspace(0, 1, n_rois))
+            output_dir = script_dir / "label_timecourse_plots" / base_tag
+            output_dir.mkdir(parents=True, exist_ok=True)
 
-            fig, ax = plt.subplots(figsize=(12, 6))
-            for roi_index, color in enumerate(colors):
-                ax.plot(
-                    evoked.times,
-                    roi_data[roi_index],
-                    color=color,
-                    label=roi_names[roi_index],
-                )
+            for start in range(0, len(roi_names), rois_per_plot):
+                stop = min(start + rois_per_plot, len(roi_names))
+                colors = plt.cm.tab10(np.linspace(0, 1, stop - start))
 
-            ax.set_title(f"ROI label time courses ({n_rois} ROIs)")
-            ax.set_xlabel("Time (s)")
-            ax.set_ylabel("AU")
-            ax.legend(fontsize=8, ncol=2)
-            fig.tight_layout()
+                fig, ax = plt.subplots(figsize=(12, 6))
+                for roi_index, color in zip(range(start, stop), colors):
+                    ax.plot(
+                        evoked.times,
+                        roi_data[roi_index],
+                        color=color,
+                        label=roi_names[roi_index],
+                    )
+
+                ax.set_title(f"ROI label time courses ({start + 1}-{stop})")
+                ax.set_xlabel("Time (s)")
+                ax.set_ylabel("AU")
+                ax.legend(fontsize=8, ncol=2)
+                fig.tight_layout()
+
+                output_path = output_dir / f"{base_tag}_rois-{start + 1:02d}-{stop:02d}.png"
+                fig.savefig(output_path, dpi=300)
+                plt.close(fig)
+                print(f"Saved: {output_path}")
         return
     mne.io.show_fiff(labels_path)
 
