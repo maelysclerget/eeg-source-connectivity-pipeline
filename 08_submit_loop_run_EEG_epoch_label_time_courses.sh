@@ -17,8 +17,9 @@ RUN_SCRIPT="/home/clerget/Scripts/code/08_run_EEG_epoch_label_time_courses.sh"
 MODES=("surface" "volume" "mixed")
 METHODS=("MNE" "sLORETA" "eLORETA")
 
-# For task data, epoch both covariance outputs from step 06.
-TASK_COV_LABELS=("4" "15")
+# For task data, epoch one labels output; the covariance tag is not kept in
+# the epoch output filename.
+TASK_COV_LABELS=("15")
 
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
@@ -79,11 +80,12 @@ do
                             INPUT_FILE="$ALT_INPUT_FILE"
                         fi
                     fi
-                    OUTPUT_DIR="$INVERSE_DIR/epochs"
+                    OUTPUT_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/epochs/$MODE/$METHOD"
+                    OUTPUT_BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
                     if [ "$TASK" = "task" ]; then
-                        OUTPUT_FILE="$OUTPUT_DIR/${BASE_TAG}_${LABEL_KIND}_task_fixed-epo.fif"
+                        OUTPUT_FILE="$OUTPUT_DIR/${OUTPUT_BASE_TAG}_${LABEL_KIND}_task_fixed-epo.fif"
                     else
-                        OUTPUT_FILE="$OUTPUT_DIR/${BASE_TAG}_${LABEL_KIND}_rs_s15_epochs-epo.fif"
+                        OUTPUT_FILE="$OUTPUT_DIR/${OUTPUT_BASE_TAG}_${LABEL_KIND}_rs_s15_epochs-epo.fif"
                     fi
 
                     if [ ! -f "$INPUT_FILE" ]; then

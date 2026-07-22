@@ -40,6 +40,11 @@ def base_tag(args: argparse.Namespace) -> str:
     return tag
 
 
+def epoch_base_tag(args: argparse.Namespace) -> str:
+    """Return the filename stem used by step 08 epoch outputs."""
+    return f"{args.subject}_ses{args.session}_task-{args.task}_src-{args.mode}_method-{args.method}"
+
+
 def connectivity_tag(args: argparse.Namespace) -> str:
     """Return the filename stem used for connectivity outputs."""
     tag = base_tag(args)
@@ -119,8 +124,16 @@ def read_roi_epochs(path: Path) -> tuple[np.ndarray, list[str], float]:
 
 def roi_epoch_paths(args: argparse.Namespace, kind: str) -> list[Path]:
     """Return baseline or nonbaseline epoch files from the step 08 output layout."""
-    directory = inverse_directory(args) / "epochs"
-    tag = base_tag(args)
+    directory = (
+        Path(args.derivatives_dir)
+        / f"sub-{args.subject}"
+        / f"ses-{args.session}"
+        / args.task
+        / "epochs"
+        / args.mode
+        / args.method
+    )
+    tag = epoch_base_tag(args)
 
     if args.mode in ("surface", "volume"):
         return [directory / f"{tag}_labels_{kind}-epo.fif"]

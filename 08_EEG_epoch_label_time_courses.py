@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 from pathlib import Path
 
 import mne
@@ -84,12 +85,36 @@ def default_labels_fif_path(args: argparse.Namespace) -> Path:
         if not args.cov_label:
             raise ValueError("task epoching needs --cov-label, e.g. 15.")
         cov_tag = args.cov_label if str(args.cov_label).startswith("s") else f"s{args.cov_label}"
-        return inverse_dir / f"cov-{cov_tag}" / f"{base_tag}_cov-{cov_tag}_labels.fif"
+        labels_fif = inverse_dir / f"cov-{cov_tag}" / f"{base_tag}_cov-{cov_tag}_labels.fif"
+        if labels_fif.exists():
+            return labels_fif
+        return inverse_dir / "task" / f"cov{cov_tag}" / f"{base_tag}_cov-{cov_tag}_labels.fif"
 
     return inverse_dir / args.task / f"{base_tag}_labels.fif"
 
 
-def save_annotation_sidecar(raw_path: Path, labels_path: Path, out_dir: Path) -> mne.Annotations:
+def default_output_dir(args: argparse.Namespace) -> Path:
+    """Return the new epoch output directory in the subject/session task folder."""
+    return (
+        Path(args.derivatives_dir)
+        / f"sub-{args.subject}"
+        / f"ses-{args.session}"
+        / args.task
+        / "epochs"
+        / args.mode
+        / args.method
+    )
+
+
+def epoch_output_stem(labels_path: Path, args: argparse.Namespace) -> str:
+    """Return the epoch filename stem, without covariance tags for task outputs."""
+    stem = labels_path.stem
+    if args.task.lower() == "task":
+        stem = re.sub(r"_cov-s?[^_]+", "", stem, count=1)
+    return stem
+
+
+def save_annotation_sidecar(raw_path: Path, out_dir: Path, stem: str) -> mne.Annotations:
     """Load raw annotations, print them, and save them next to labels epochs."""
     print("\nOpening raw FIF for annotations:")
     print(raw_path)
@@ -97,7 +122,7 @@ def save_annotation_sidecar(raw_path: Path, labels_path: Path, out_dir: Path) ->
     annotations = raw.annotations
     print_annotation_descriptions(annotations)
 
-    sidecar_path = out_dir / f"{labels_path.stem}_annot.fif"
+    sidecar_path = out_dir / f"{stem}_annot.fif"
     annotations.save(sidecar_path, overwrite=True)
     chmod_group(sidecar_path)
     print(f"Saved annotation sidecar: {sidecar_path}")
@@ -132,7 +157,7 @@ def process_label_epochs(args: argparse.Namespace) -> None:
     if not labels_path.exists():
         raise FileNotFoundError(f"Labels FIF not found: {labels_path}")
 
-    out_dir = Path(args.output_dir) if args.output_dir else labels_path.parent / "epochs"
+    out_dir = Path(args.output_dir) if args.output_dir else default_output_dir(args)
     out_dir.mkdir(parents=True, exist_ok=True)
     os.chmod(out_dir, 0o2770)
 
@@ -148,10 +173,10 @@ def process_label_epochs(args: argparse.Namespace) -> None:
 
     task_lower = args.task.lower()
     raw_path = get_raw_fif_path(args)
-    annotations = save_annotation_sidecar(raw_path, labels_path, out_dir)
+    stem = epoch_output_stem(labels_path, args)
+    annotations = save_annotation_sidecar(raw_path, out_dir, stem)
 
     raw_labels = labels_evoked_to_raw(evoked, annotations=annotations)
-    stem = labels_path.stem
 
     if task_lower == "task":
         baseline_no_stim_epochs, baseline_stim_epochs, fixed_task_epochs, sequence_epochs = make_task_epochs(
@@ -192,7 +217,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--method", default=method, help="Inverse method used for the labels FIF.")
     parser.add_argument("--cov-label", default=cov_label, help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
-    parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: labels_fif/../epochs.")
+    parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: task/epochs/mode/method.")
     parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="S15 annotation used for RS blocks and task baselines.")
     parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task S10 annotation used as fixed and sequence block start.")
     parser.add_argument("--epoch-duration", type=float, default=5.0, help="Epoch duration in seconds for fixed epochs.")

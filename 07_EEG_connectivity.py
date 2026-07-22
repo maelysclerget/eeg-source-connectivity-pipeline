@@ -8,13 +8,13 @@ This script reads the ROI Epochs FIF files created by
 08_EEG_epoch_label_time_courses.py and computes baseline-corrected
 ROI x ROI imaginary coherence matrices.
 
-For task, the expected inverse-solution layout is:
+For task, the expected epoch layout is:
 
-    inverse_solution/<mode>/<method>/task/cov<label>/
+    <task>/epochs/<mode>/<method>/
 
 For RSpre and other non-task recordings, the expected layout is:
 
-    inverse_solution/<mode>/<method>/<task>/
+    <task>/epochs/<mode>/<method>/
 
 The input channels are ROIs.
 """
