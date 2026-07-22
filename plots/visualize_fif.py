@@ -16,22 +16,21 @@ import mne
 
 subject = "41Y01"
 session = "1"
+task = "task"
 mode = "surface"
 method = "MNE"
-cov = "cov-s15"
+cov = "s15"
 n_rois_to_plot = 20
 
 subject_fs = f"sub-{subject}_ses-baseline"
 
 source_reconstruction_dir = Path(f"/work/uphummel/studies/tTIS-EEG/derivatives/EEG/sub-{subject}/ses-{session}/source_reconstruction")
 
-inverse_dir = (
-    source_reconstruction_dir
-    / "inverse_solution"
-    / mode
-    / method
-    / cov
-)
+inverse_dir = source_reconstruction_dir / "inverse_solution" / mode / method / task
+base_tag = f"{subject}_ses{session}_task-{task}_src-{mode}_method-{method}"
+if task == "task":
+    inverse_dir = inverse_dir / f"cov{cov}"
+    base_tag = f"{base_tag}_cov-{cov}"
 
 trans_path = source_reconstruction_dir / f"{subject}_ses{session}_trans.fif"
 
@@ -96,10 +95,7 @@ def show_inverse(inv_path: Path):
 
 def show_source_estimate():
     """Load and plot the method/mode/cov surface source estimate pair."""
-    stc_prefix = (
-        inverse_dir
-        / f"{subject}_ses{session}_task-task_src-{mode}_method-{method}_{cov}_stc"
-    )
+    stc_prefix = inverse_dir / f"{base_tag}_stc"
     stc_lh_path = Path(f"{stc_prefix}-lh.stc")
     stc_rh_path = Path(f"{stc_prefix}-rh.stc")
 
@@ -123,10 +119,7 @@ def show_source_estimate():
 
 def show_labels():
     """Load and plot the method/mode/cov labels FIF file."""
-    labels_path = (
-        inverse_dir
-        / f"{subject}_ses{session}_task-task_src-{mode}_method-{method}_{cov}_labels.fif"
-    )
+    labels_path = inverse_dir / f"{base_tag}_labels.fif"
 
     if not labels_path.exists():
         print("\nNo matching labels FIF found:")
