@@ -268,6 +268,7 @@ def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, task_duration
     return sequence_epochs
 def save_epochs(epochs, path):
     """Save Epochs FIF."""
+    epochs = epochs[np.argsort(epochs.events[:, 0])]
     epochs.save(path, overwrite=True)
     # Real duration = last time - first time + one sample. times[0]  = 0.000 times[-1] = 4.999 & 4.999 + 0.001 = 5.000 s
     duration = epochs.times[-1] - epochs.times[0] + 1.0 / epochs.info["sfreq"]
