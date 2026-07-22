@@ -71,7 +71,7 @@ def read_roi_epochs(path: Path) -> tuple[np.ndarray, list[str], float]:
     sfreq = float(epochs.info["sfreq"])
 
     if data.ndim != 3:
-        raise ValueError(f"Expected 3D epochs data in {path}, got shape {data.shape}.")
+        raise ValueError(f"Expected 3D epochs data in {path}, got shape {data.shape}.") #n_epochs x n_ROIs x n_times
     if len(roi_names) != data.shape[1]:
         raise ValueError(
             f"ROI name count does not match data channels in {path}: "
@@ -81,7 +81,7 @@ def read_roi_epochs(path: Path) -> tuple[np.ndarray, list[str], float]:
     return data, roi_names, sfreq
 
 
-def roi_epoch_paths(args: argparse.Namespace, kind: str) -> list[Path]:
+def roi_epoch_paths(args: argparse.Namespace, kind: str) -> list[Path]: # builds path for input files (baseline or nonbaseline)
     """Return baseline or nonbaseline epoch files from the step 08 output layout."""
     directory = (
         Path(args.derivatives_dir)
@@ -135,7 +135,7 @@ def load_roi_epochs(args: argparse.Namespace, kind: str) -> tuple[np.ndarray, li
     if data.shape[2] < 2:
         raise ValueError("Need at least two time samples to compute connectivity.")
 
-    source_text = " + ".join(item[3] for item in loaded)
+    source_text = " + ".join(item[3] for item in loaded) #joins all loaded file paths into one string
     print(f"{kind.capitalize()} epochs shape: {data.shape}")
 
     return data, roi_names, first_sfreq, source_text
