@@ -243,7 +243,7 @@ def personalize_montage(
     # Optional visualization
     if plot:
         fig = raw_subset.plot_sensors(kind="topomap", show_names=True)
-        fig_path = (output_folder/ f"{subject}_ses{ses}_task-{task}_personalized_montage.png")
+        fig_path = (output_folder/ f"{subject}_ses{ses}_personalized_montage.png")
         plt.savefig(fig_path, bbox_inches="tight")
         plt.close(fig)
         print(f"Saved personalized montage plot to {fig_path}")
@@ -267,7 +267,7 @@ def personalize_montage(
     ######
 
     # Save fif with personalized montage
-    save_path = output_folder/ f"{subject}_ses{ses}_task-{task}_personalized_montage.fif"
+    save_path = output_folder/ f"{subject}_ses{ses}_personalized_montage.fif"
     raw_subset.save(save_path, overwrite=True)
     print(f"Saved personalized montage FIF to {save_path}")
     

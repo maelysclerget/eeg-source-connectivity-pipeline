@@ -55,14 +55,14 @@ def freesurfer_subject(subject: str) -> str:
     return f"sub-{subject}_ses-baseline"
 
 
-def get_personalized_montage_path(subject: str, session: str, task: str) -> Path:
+def get_personalized_montage_path(subject: str, session: str) -> Path:
     return (
         Path(DERIVATIVES_DIR)
         / f"sub-{subject}"
         / f"ses-{session}"
         / "source_reconstruction"
         / "personalized_montage"
-        / f"{subject}_ses{session}_task-{task}_personalized_montage.fif"
+        / f"{subject}_ses{session}_personalized_montage.fif"
     )
 
 
@@ -376,7 +376,7 @@ def process_inverse_solution(args: argparse.Namespace) -> None:
 
     os.environ["SUBJECTS_DIR"] = str(subjects_dir)
 
-    raw_path = Path(args.raw_path) if args.raw_path else get_personalized_montage_path(subject, session, task)
+    raw_path = Path(args.raw_path) if args.raw_path else get_personalized_montage_path(subject, session)
     if not raw_path.exists():
         raise FileNotFoundError(f"Raw FIF not found: {raw_path}")
 

@@ -39,7 +39,7 @@ do
         continue
     fi
 
-    INPUT_FILE="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/personalized_montage/${SUB}_ses${SES}_task-${TASK}_personalized_montage.fif"
+    INPUT_FILE="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/personalized_montage/${SUB}_ses${SES}_personalized_montage.fif"
     if [ ! -f "$INPUT_FILE" ]; then
         echo "Skipping missing personalized montage: sub-$SUB ses-$SES task-$TASK"
     else
