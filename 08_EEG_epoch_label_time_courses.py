@@ -51,13 +51,7 @@ def chmod_group(path: str | Path) -> None:
 def get_raw_fif_path(args: argparse.Namespace) -> Path:
     """Return the preprocessed raw FIF path that contains annotations."""
     stem = f"sub-{args.subject}_ses-{args.session}_task-{args.task}"
-    task_lower = args.task.lower()
-    if task_lower == "task":
-        filename = f"{stem}_eeg_not_interpolated_final_preprocessed_eeg.fif"
-    elif task_lower == "rsstim":
-        filename = f"{stem}_eeg_final_preprocessed_eeg_not_interpolated.fif"
-    else:
-        filename = f"{stem}_eeg_final_preprocessed_raw_source_level.fif"
+    filename = f"{stem}_eeg_not_interpolated_final_preprocessed_eeg.fif"
 
     raw_path = (
         Path(args.derivatives_dir)
