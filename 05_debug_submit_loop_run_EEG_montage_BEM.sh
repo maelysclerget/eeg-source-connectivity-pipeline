@@ -23,9 +23,9 @@ mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
 # ---- ONE TEST SUBJECT ----
-SUB="42Y01"
+SUB="41Y01"
 SES="1"
-TASK="RSpre"
+TASK="task"
 
 echo "$SUB $SES $TASK" >> "$PARAM_LIST"
 

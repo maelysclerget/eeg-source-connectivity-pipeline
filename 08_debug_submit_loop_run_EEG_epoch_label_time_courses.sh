@@ -13,7 +13,7 @@ mkdir -p "$LOG_DIR"
 # ---- ONE TEST SUBJECT ----
 SUB="41Y01"
 SES="1"
-TASK="RSstim"
+TASK="task"
 MODES=("surface" "volume" "mixed")
 METHOD="MNE"
 COV_LABEL="15"
