@@ -15,6 +15,7 @@ import mne
 
 
 subjects_dir = Path("/work/uphummel/studies/tTIS-EEG/derivatives/MRI/freesurfer")
+script_dir = Path(__file__).resolve().parent
 
 stc_path = (
     "/work/uphummel/studies/tTIS-EEG/derivatives/EEG/sub-41Y01/ses-1/"
@@ -22,8 +23,8 @@ stc_path = (
     "41Y01_ses1_task-RSpre_src-surface_method-eLORETA_morph-fsaverage_stc"
 )
 
-output_dir = Path(stc_path).parent / "plots"
-output_dir.mkdir(exist_ok=True)
+output_dir = script_dir / "surface_stc_plots"
+output_dir.mkdir(parents=True, exist_ok=True)
 
 initial_time = 1.0
 
@@ -48,4 +49,3 @@ fig.savefig(output_path, dpi=300, bbox_inches="tight")
 plt.close(fig)
 
 print(f"Saved: {output_path}")
-

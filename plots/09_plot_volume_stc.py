@@ -23,6 +23,7 @@ method = "eLORETA"
 subject_fs = f"sub-{subject}_ses-baseline"
 
 subjects_dir = Path("/work/uphummel/studies/tTIS-EEG/derivatives/MRI/freesurfer")
+script_dir = Path(__file__).resolve().parent
 inverse_dir = (
     Path("/work/uphummel/studies/tTIS-EEG/derivatives/EEG")
     / f"sub-{subject}"
@@ -38,8 +39,8 @@ base_tag = f"{subject}_ses{session}_task-{task}_src-{mode}_method-{method}"
 stc_path = inverse_dir / f"{base_tag}_stc.h5"
 fwd_path = inverse_dir / f"{base_tag}-fwd.fif"
 
-output_dir = inverse_dir / "plots"
-output_dir.mkdir(exist_ok=True)
+output_dir = script_dir / "volume_stc_plots"
+output_dir.mkdir(parents=True, exist_ok=True)
 
 initial_time = 0.09
 
