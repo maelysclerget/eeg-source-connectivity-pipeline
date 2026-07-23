@@ -10,8 +10,9 @@ import pandas as pd
 
 derivatives_dir = Path("/work/uphummel/studies/tTIS-EEG/derivatives/EEG")
 task = "RSpre"
-script_dir = Path(__file__).resolve().parent
-output_csv = script_dir / "RSpre_quality_summary.csv"
+documentation_dir = derivatives_dir / "Documentation"
+documentation_dir.mkdir(parents=True, exist_ok=True)
+output_csv = documentation_dir / "preprocessing_tTIS_EEG_RSpre.csv"
 
 
 def read_ica_components(path):
