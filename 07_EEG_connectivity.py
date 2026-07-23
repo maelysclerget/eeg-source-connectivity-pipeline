@@ -14,7 +14,7 @@ Epoch inputs are read from:
 
 Connectivity outputs are saved as:
 
-    connectivity/<mode>/<method>/<task>/
+    <task>/connectivity/<mode>/<method>/
 
 The input channels are ROIs.
 """

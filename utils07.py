@@ -53,10 +53,10 @@ def output_directory(args: argparse.Namespace) -> Path:
         Path(args.derivatives_dir)
         / f"sub-{args.subject}"
         / f"ses-{args.session}"
+        / args.task
         / "connectivity"
         / args.mode
         / args.method
-        / args.task
     )
 
 

@@ -41,7 +41,7 @@ do
         for METHOD in "${METHODS[@]}"
         do
             EPOCH_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/epochs/$MODE/$METHOD"
-            CONNECTIVITY_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/connectivity/$MODE/$METHOD/$TASK"
+            CONNECTIVITY_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/connectivity/$MODE/$METHOD"
             BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
 
             if [ "$TASK" = "task" ]; then
