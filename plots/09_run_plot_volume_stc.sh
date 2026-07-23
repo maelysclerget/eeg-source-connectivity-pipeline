@@ -20,4 +20,4 @@ cd /home/clerget/Scripts/code
 
 source /work/uphummel/shared/software/python_envs/mne_venv/bin/activate
 
-python 09_plot_volume_stc.py
+python plots/09_plot_volume_stc.py

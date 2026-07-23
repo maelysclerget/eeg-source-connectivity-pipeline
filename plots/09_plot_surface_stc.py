@@ -18,7 +18,7 @@ subject = "41Y01"
 session = "1"
 task = "RSpre"
 mode = "surface"
-method = "MNE"
+method = "eLORETA"
 
 subjects_dir = Path("/work/uphummel/studies/tTIS-EEG/derivatives/MRI/freesurfer")
 script_dir = Path(__file__).resolve().parent
