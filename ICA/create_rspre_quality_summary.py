@@ -46,8 +46,18 @@ for task_dir in sorted(derivatives_dir.glob(f"sub-*/ses-*/{task}")):
     annotated_fif = task_dir / f"{base}_annotated_eeg.fif"
     ica_csv = task_dir / f"{base}_ica_excluded_components.csv"
 
-    raw = mne.io.read_raw_fif(annotated_fif, preload=False, verbose="ERROR")
-    bad_channels = raw.info["bads"]
+    if annotated_fif.exists():
+        raw = mne.io.read_raw_fif(annotated_fif, preload=False, verbose="ERROR")
+        bad_segments = round(bad_segments_percent(raw), 2)
+        bad_channels = raw.info["bads"]
+        n_bad_channels = len(bad_channels)
+        bad_channels_text = ", ".join(bad_channels)
+    else:
+        print(f"Missing annotated FIF: {annotated_fif}")
+        bad_segments = "missing info"
+        n_bad_channels = "missing info"
+        bad_channels_text = "missing info"
+
     ica_components = read_ica_components(ica_csv)
     if ica_components is None:
         n_ica_rejected = "missing info"
@@ -60,9 +70,9 @@ for task_dir in sorted(derivatives_dir.glob(f"sub-*/ses-*/{task}")):
         {
             "Patient": subject,
             "Session": session,
-            "Bad segments (% omitted)": round(bad_segments_percent(raw), 2),
-            "N bad channels": len(bad_channels),
-            "Bad channels": ", ".join(bad_channels),
+            "Bad segments (% omitted)": bad_segments,
+            "N bad channels": n_bad_channels,
+            "Bad channels": bad_channels_text,
             "N ICA rejected": n_ica_rejected,
             "Components ICA rejected": ica_rejected,
             "State": "",
