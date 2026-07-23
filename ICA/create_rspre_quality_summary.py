@@ -16,6 +16,10 @@ output_csv = script_dir / "RSpre_quality_summary.csv"
 
 def read_ica_components(path):
     """Read rejected ICA component numbers from the ICA CSV."""
+    if not path.exists():
+        print(f"Missing ICA CSV: {path}")
+        return None
+
     text = path.read_text()
     components = sorted(set(int(number) for number in re.findall(r"\d+", text)))
     return components
@@ -45,6 +49,12 @@ for task_dir in sorted(derivatives_dir.glob(f"sub-*/ses-*/{task}")):
     raw = mne.io.read_raw_fif(annotated_fif, preload=False, verbose="ERROR")
     bad_channels = raw.info["bads"]
     ica_components = read_ica_components(ica_csv)
+    if ica_components is None:
+        n_ica_rejected = "missing info"
+        ica_rejected = "missing info"
+    else:
+        n_ica_rejected = len(ica_components)
+        ica_rejected = ", ".join(str(component) for component in ica_components)
 
     rows.append(
         {
@@ -53,8 +63,8 @@ for task_dir in sorted(derivatives_dir.glob(f"sub-*/ses-*/{task}")):
             "Bad segments (% omitted)": round(bad_segments_percent(raw), 2),
             "N bad channels": len(bad_channels),
             "Bad channels": ", ".join(bad_channels),
-            "N ICA rejected": len(ica_components),
-            "Components ICA rejected": ", ".join(str(component) for component in ica_components),
+            "N ICA rejected": n_ica_rejected,
+            "Components ICA rejected": ica_rejected,
             "State": "",
             "Comments": "",
             "SS, Tony comments": "",
