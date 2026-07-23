@@ -2,6 +2,7 @@
 # Run this on 'on demand'
 """
 Visualize MNE inverse-solution FIF outputs.
+Visualize labels.fif, non-epoched continuous ROI time courses 
 
 Run with:
     python visualize_fif.py
@@ -151,7 +152,7 @@ def show_labels():
             print("\nReconstructed ROI EvokedArray:")
             print(evoked_array)
 
-            output_dir = script_dir / "label_timecourse_plots" / base_tag
+            output_dir = script_dir / "non_epoched_ROI_time_courses" / base_tag
             output_dir.mkdir(parents=True, exist_ok=True)
 
             for start in range(0, len(roi_names), rois_per_plot):

@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 derivatives_dir = "/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 subject = "41Y01"
@@ -14,6 +15,10 @@ method = "MNE"
 label_kind = "labels"
 epoch_kind = "task_fixed"
 n_sources = 20
+
+script_dir = Path(__file__).resolve().parent
+output_dir = script_dir / "epoched_ROI_time_courses"
+output_dir.mkdir(parents=True, exist_ok=True)
 
 base_tag = f"{subject}_ses{session}_task-{task}_src-{mode}_method-{method}"
 epochs_path = (
@@ -45,5 +50,7 @@ for block in sorted(epochs.metadata["block"].unique()):
     plt.ylabel("ROI time course")
     plt.legend(fontsize=8)
     plt.tight_layout()
-    plt.savefig(f"{base_tag}_{epoch_kind}_block_{block}_average.png", dpi=300)
+    output_path = output_dir / f"{base_tag}_{epoch_kind}_block_{block}_average.png"
+    plt.savefig(output_path, dpi=300)
     plt.close()
+    print(f"Saved: {output_path}")
