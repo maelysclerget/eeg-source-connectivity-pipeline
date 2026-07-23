@@ -6,7 +6,6 @@
 # skips already-created step 08 Epochs FIF files, and submits one array row per
 # missing subject/session/task/mode/method/covariance/label-kind combination.
 
-DATA_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
@@ -24,17 +23,17 @@ TASK_COV_LABELS=("15")
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
-echo "Scanning $DATA_ROOT for task, RSpre, RSpost, and RSstim EEG files."
+echo "Scanning $DERIV_ROOT for task-RSpre non-interpolated preprocessed EEG FIF files."
 
-find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-*_eeg.vhdr" | sort | while read -r FILE
+find "$DERIV_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg_not_interpolated_final_preprocessed_eeg.fif" | sort | while read -r FILE
 do
     BASENAME=$(basename "$FILE")
 
     SUB=$(echo "$BASENAME" | sed -E 's/^sub-([^_]+)_ses-.*/\1/')
     SES=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-([^_]+)_task-.*/\1/')
-    TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
+    TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg_not_interpolated_final_preprocessed_eeg\.fif$/\1/')
 
-    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ] && [ "$TASK" != "RSpost" ] && [ "$TASK" != "RSstim" ]; then
+    if [ "$TASK" != "RSpre" ]; then
         continue
     fi
 

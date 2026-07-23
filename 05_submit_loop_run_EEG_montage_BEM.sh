@@ -19,9 +19,9 @@ mkdir -p "$LOG_DIR"
 # Empty the parameter list before rebuilding it
 > "$PARAM_LIST"
 
-echo "Scanning $DATA_ROOT for task-RSpre EEG files..." # <--- change filename here !!
+echo "Scanning $DERIV_ROOT for task-RSpre non-interpolated preprocessed EEG FIF files..." # <--- change filename here !!
 
-find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg.vhdr" | sort | while read -r FILE # <--- and here !! 
+find "$DERIV_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg_not_interpolated_final_preprocessed_eeg.fif" | sort | while read -r FILE # <--- and here !! 
 
 do
     BASENAME=$(basename "$FILE")
@@ -29,7 +29,7 @@ do
     # Extract subject and session from filename
     SUB=$(echo "$BASENAME" | sed -E 's/^sub-([^_]+)_ses-.*/\1/')
     SES=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-([^_]+)_task-.*/\1/')
-    TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
+    TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg_not_interpolated_final_preprocessed_eeg\.fif$/\1/')
 
     # Expected output file
     OUTPUT_FILE="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/personalized_montage/${SUB}_ses${SES}_personalized_montage.fif"

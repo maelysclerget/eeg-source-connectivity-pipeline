@@ -1,7 +1,6 @@
 #!/bin/bash
 # Author Stavriani Skarvelaki / Maelys Clerget
 
-DATA_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
@@ -13,9 +12,9 @@ MODES=("surface" "volume" "mixed")
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
 
-echo "Scanning $DATA_ROOT for unique subject/session EEG files."
+echo "Scanning $DERIV_ROOT for unique subject/session non-interpolated preprocessed EEG FIF files."
 
-find "$DATA_ROOT" -type f -name "sub-*_ses-*_task-*_eeg.vhdr" | sort | while read -r FILE
+find "$DERIV_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg_not_interpolated_final_preprocessed_eeg.fif" | sort | while read -r FILE
 do
     BASENAME=$(basename "$FILE")
 

@@ -6,7 +6,6 @@
 # connectivity summary already exists, and submits one job per missing result.
 
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
-RAW_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_connectivity.txt"
@@ -24,15 +23,15 @@ mkdir -p "$LOG_DIR"
 
 echo "Scanning ROI epoch outputs in $DERIV_ROOT."
 
-find "$RAW_ROOT" -type f -name "sub-*_ses-*_task-*_eeg.vhdr" | sort | while read -r FILE
+find "$DERIV_ROOT" -type f -name "sub-*_ses-*_task-RSpre_eeg_not_interpolated_final_preprocessed_eeg.fif" | sort | while read -r FILE
 do
     BASENAME=$(basename "$FILE")
 
     SUB=$(echo "$BASENAME" | sed -E 's/^sub-([^_]+)_ses-.*/\1/')
     SES=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-([^_]+)_task-.*/\1/')
-    TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg\.vhdr$/\1/')
+    TASK=$(echo "$BASENAME" | sed -E 's/^sub-[^_]+_ses-[^_]+_task-([^_]+)_eeg_not_interpolated_final_preprocessed_eeg\.fif$/\1/')
 
-    if [ "$TASK" != "task" ] && [ "$TASK" != "RSpre" ] && [ "$TASK" != "RSpost" ] && [ "$TASK" != "RSstim" ]; then
+    if [ "$TASK" != "RSpre" ]; then
         continue
     fi
 
