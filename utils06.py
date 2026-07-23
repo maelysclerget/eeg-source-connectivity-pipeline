@@ -400,13 +400,9 @@ def extract_labels_all_modes(stc, src_all, mode, subject, subjects_dir):
 
     # MIXED: surface + volume (striatum)
     elif mode == "mixed":
-        # In mixed mode src_all = surface + volume.
-        # The first two entries are left/right cortex, so use only those for aparc labels.
-        src_surface = mne.SourceSpaces(src_all[:2])
-
         # first cortex
         labels_surf, ts_surf = extract_surface_label_ts(
-            stc, src_surface, subject, subjects_dir, parc="aparc"
+            stc, src_all, subject, subjects_dir, parc="aparc"
         )
 
         # and then Striatum
