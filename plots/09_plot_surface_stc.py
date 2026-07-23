@@ -14,14 +14,28 @@ import matplotlib.pyplot as plt
 import mne
 
 
+subject = "41Y01"
+session = "1"
+task = "RSpre"
+mode = "surface"
+method = "eLORETA"
+
 subjects_dir = Path("/work/uphummel/studies/tTIS-EEG/derivatives/MRI/freesurfer")
 script_dir = Path(__file__).resolve().parent
 
-stc_path = (
-    "/work/uphummel/studies/tTIS-EEG/derivatives/EEG/sub-41Y01/ses-1/"
-    "source_reconstruction/inverse_solution/surface/eLORETA/RSpre/"
-    "41Y01_ses1_task-RSpre_src-surface_method-eLORETA_morph-fsaverage_stc"
+inverse_dir = (
+    Path("/work/uphummel/studies/tTIS-EEG/derivatives/EEG")
+    / f"sub-{subject}"
+    / f"ses-{session}"
+    / "source_reconstruction"
+    / "inverse_solution"
+    / mode
+    / method
+    / task
 )
+
+base_tag = f"{subject}_ses{session}_task-{task}_src-{mode}_method-{method}"
+stc_path = inverse_dir / f"{base_tag}_morph-fsaverage_stc"
 
 output_dir = script_dir / "surface_stc_plots"
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -44,7 +58,7 @@ fig = stc_fsaverage.plot(
     clim=dict(kind="percent", lims=[70, 85, 99])
 )
 
-output_path = output_dir / "morphed_fsaverage_matplotlib_full.png"
+output_path = output_dir / f"{base_tag}_surface_stc_t1000.png"
 fig.savefig(output_path, dpi=300, bbox_inches="tight")
 plt.close(fig)
 
