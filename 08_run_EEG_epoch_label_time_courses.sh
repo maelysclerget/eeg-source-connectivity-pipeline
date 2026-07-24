@@ -53,18 +53,10 @@ if [ "$TASK" = "task" ]; then
         COV_TAG="s${COV_TAG}"
     fi
 
-    LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/cov-$COV_TAG"
+    LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/inverse_solution/$MODE/$METHOD/cov$COV_TAG"
     LABELS_FIF="$LABELS_DIR/${BASE_TAG}_cov-${COV_TAG}_${LABEL_KIND}.fif"
-    if [ ! -f "$LABELS_FIF" ]; then
-        ALT_LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/task/cov$COV_TAG"
-        ALT_LABELS_FIF="$ALT_LABELS_DIR/${BASE_TAG}_cov-${COV_TAG}_${LABEL_KIND}.fif"
-        if [ -f "$ALT_LABELS_FIF" ]; then
-            LABELS_DIR="$ALT_LABELS_DIR"
-            LABELS_FIF="$ALT_LABELS_FIF"
-        fi
-    fi
 else
-    LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/$TASK"
+    LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/inverse_solution/$MODE/$METHOD"
     LABELS_FIF="$LABELS_DIR/${BASE_TAG}_${LABEL_KIND}.fif"
 fi
 

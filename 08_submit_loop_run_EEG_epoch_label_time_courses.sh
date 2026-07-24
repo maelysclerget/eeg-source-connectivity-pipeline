@@ -53,11 +53,11 @@ do
                     if [[ "$COV_TAG" != s* ]]; then
                         COV_TAG="s${COV_TAG}"
                     fi
-                    INVERSE_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/cov-$COV_TAG"
+                    INVERSE_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/inverse_solution/$MODE/$METHOD/cov$COV_TAG"
                     BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}_cov-${COV_TAG}"
                     PARAM_COV_LABEL="$COV_LABEL"
                 else
-                    INVERSE_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/$TASK"
+                    INVERSE_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/inverse_solution/$MODE/$METHOD"
                     BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
                     PARAM_COV_LABEL="none"
                 fi
@@ -71,14 +71,6 @@ do
                 for LABEL_KIND in "${LABEL_KINDS[@]}"
                 do
                     INPUT_FILE="$INVERSE_DIR/${BASE_TAG}_${LABEL_KIND}.fif"
-                    if [ "$TASK" = "task" ] && [ ! -f "$INPUT_FILE" ]; then
-                        ALT_INVERSE_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/source_reconstruction/inverse_solution/$MODE/$METHOD/task/cov$COV_TAG"
-                        ALT_INPUT_FILE="$ALT_INVERSE_DIR/${BASE_TAG}_${LABEL_KIND}.fif"
-                        if [ -f "$ALT_INPUT_FILE" ]; then
-                            INVERSE_DIR="$ALT_INVERSE_DIR"
-                            INPUT_FILE="$ALT_INPUT_FILE"
-                        fi
-                    fi
                     OUTPUT_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/epochs/$MODE/$METHOD"
                     OUTPUT_BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
                     if [ "$TASK" = "task" ]; then
