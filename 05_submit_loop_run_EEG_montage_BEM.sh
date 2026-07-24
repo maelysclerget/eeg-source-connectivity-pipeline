@@ -9,7 +9,7 @@
 DATA_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
-LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs" #Specific log directory for this step .err are the errors and .out are the outputs of the scirpt, they are upfated live during the time that the job is running.
+LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs" #Specific log directory for this step .err are the errors and .out are the outputs of the scirpt, they are upfated live during the time that the job is running.
 
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_bem.txt"
 RUN_SCRIPT="/home/clerget/Scripts/code/05_run_EEG_montage_BEM.sh"

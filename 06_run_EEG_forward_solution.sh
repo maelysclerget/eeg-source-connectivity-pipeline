@@ -6,8 +6,8 @@
 #SBATCH --nodes=1
 #SBATCH --mem=192G
 #SBATCH --cpus-per-task=29
-#SBATCH --error=/home/clerget/Scripts/preprocessing_pipeline/logs/%x_%A_%a.err
-#SBATCH --output=/home/clerget/Scripts/preprocessing_pipeline/logs/%x_%A_%a.out
+#SBATCH --error=/work/uphummel/studies/tTIS-EEG/logs/%x_%A_%a.err
+#SBATCH --output=/work/uphummel/studies/tTIS-EEG/logs/%x_%A_%a.out
 
 umask 0002
 

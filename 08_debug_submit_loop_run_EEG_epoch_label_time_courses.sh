@@ -3,7 +3,7 @@
 
 # Debug submitter for a small set of ROI label epoching jobs.
 
-LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
+LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_epoch_label_time_courses.txt"
 RUN_SCRIPT="/home/clerget/Scripts/code/08_run_EEG_epoch_label_time_courses.sh"
 

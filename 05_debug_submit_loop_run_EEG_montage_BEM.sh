@@ -12,7 +12,7 @@
 DATA_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
-LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
+LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
 
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_bem.txt"
 RUN_SCRIPT="/home/clerget/Scripts/code/05_run_EEG_montage_BEM.sh"

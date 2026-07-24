@@ -1,7 +1,7 @@
 #!/bin/bash
 # Author Stavriani Skarvelaki / Maelys Clerget
 
-LOG_DIR="/work/uphummel/studies/tTIS-EEG/code/Maelys/logs"
+LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_connectivity.txt"
 RUN_SCRIPT="/home/clerget/Scripts/code/07_run_EEG_connectivity.sh"
 
