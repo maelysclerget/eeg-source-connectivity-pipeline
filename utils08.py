@@ -116,33 +116,32 @@ def _make_task_block_epochs(raw_labels, block_starts, condition, epoch_duration,
     )
 
 
-def _make_rs_segment_epochs(raw_labels, epoch_specs, event_prefix, epoch_duration):
-    """Used for RSpre/RSpost/RSstim only: create fixed epochs inside S15 segments."""
+def _make_rs_fixed_epochs(raw_labels, task_name, epoch_duration):
+    """Create fixed-length RS epochs across the full recording."""
     sfreq = raw_labels.info["sfreq"]
-    events = []
-    metadata = []
-
-    for segment, epoch_in_segment, start_sample in epoch_specs:
-        events.append([int(start_sample), 0, 1])
-        metadata.append(
-            {
-                "condition": event_prefix,
-                "segment": segment,
-                "epoch_in_segment": epoch_in_segment,
-                "duration_s": epoch_duration,
-            }
-        )
-
+    fixed_events = mne.make_fixed_length_events(
+        raw_labels,
+        id=1,
+        start=0.0,
+        stop=raw_labels.times[-1],
+        duration=epoch_duration,
+        first_samp=True,
+    )
     return mne.Epochs(
         raw_labels,
-        events=np.asarray(events, dtype=int),
+        events=fixed_events,
         event_id=None,
         tmin=0.0,
-        # MNE includes tmax, so subtract one sample.
-        # Example: 5 s at 1000 Hz -> 5 - 1/1000 = 4.999 s.
         tmax=epoch_duration - 1.0 / sfreq,
         baseline=None,
-        metadata=pd.DataFrame(metadata),
+        metadata=pd.DataFrame(
+            {
+                "condition": [f"{task_name}_fixed"] * len(fixed_events),
+                "segment": [1] * len(fixed_events),
+                "epoch_in_segment": list(range(1, len(fixed_events) + 1)),
+                "duration_s": [epoch_duration] * len(fixed_events),
+            }
+        ),
         preload=True,
         reject=None,
         flat=None,
@@ -183,37 +182,12 @@ def make_task_epochs(raw_labels, epoch_duration=5.0, s15_annotation="Stimulus/S 
 
 
 def make_rs_epochs(raw_labels, task_name, epoch_duration=5.0, s15_annotation="Stimulus/S 15"):
-    """Used for RSpre/RSpost/RSstim only: create 5 s epochs after S15."""
-    events, event_id = mne.events_from_annotations(raw_labels, verbose="ERROR") # Get all events
-    print("Event IDs found:", event_id)
-    s15_events, _ = _events_for_annotation(events, event_id, s15_annotation) # Get S15 events
-
-    sfreq = raw_labels.info["sfreq"]
-    recording_end_sample = raw_labels.n_times - 1
-    epoch_specs = []
-    epoch_samples = int(round(epoch_duration * sfreq))
-
-    for segment_index, s15_event in enumerate(s15_events, start=1):
-        start_sample = int(s15_event[0])
-        # Each RS segment starts at one S15 and stops at the next S15.
-        # The last segment stops at the end of the recording.
-        if segment_index < len(s15_events): #checks whether there is a next S15 event after the current one
-            next_s15_sample = int(s15_events[segment_index, 0])
-        else:
-            next_s15_sample = recording_end_sample
-
-        n_epochs = max(0, (next_s15_sample - start_sample) // epoch_samples) # Integer division, max makes sure result is never negative
-        for epoch_in_segment in range(1, n_epochs + 1):
-            # Example: start=1000, epoch_samples=1250.
-            # Epoch 1 starts at 1000 + (1 - 1) * 1250 = 1000. Epoch 2 starts at 1000 + (2 - 1) * 1250 = 2250.
-            epoch_specs.append((segment_index, epoch_in_segment, start_sample + (epoch_in_segment - 1) * epoch_samples))
-
-    return _make_rs_segment_epochs(
-        raw_labels,
-        epoch_specs,
-        f"{task_name}_s15",
-        epoch_duration,
+    """Used for RSpre/RSpost/RSstim only: create fixed 5 s epochs."""
+    print(
+        f"Creating fixed-length {task_name} epochs every {epoch_duration:g} s "
+        "without using S15 annotations."
     )
+    return _make_rs_fixed_epochs(raw_labels, task_name, epoch_duration)
 
 
 def make_task_sequence_epochs(raw_labels, task_blocks, s10_events, task_duration=90.0):

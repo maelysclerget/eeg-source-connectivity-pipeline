@@ -184,7 +184,7 @@ def process_label_epochs(args: argparse.Namespace) -> None:
         save_sequence_epochs(sequence_epochs, out_dir, stem)
         return
 
-    # RSpre/RSpost/RSstim creates fixed 5 s epochs after S15.
+    # RSpre/RSpost/RSstim creates fixed 5 s epochs across the recording.
     rs_epochs = make_rs_epochs(
         raw_labels,
         task_name=args.task,
@@ -208,7 +208,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cov-label", default="15", help="Task covariance label, e.g. 15.")
     parser.add_argument("--derivatives-dir", default=DERIVATIVES_DIR, help="EEG derivatives root.")
     parser.add_argument("--output-dir", default=None, help="Optional output directory. Default: task/epochs/mode/method.")
-    parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="S15 annotation used for RS blocks and task baselines.")
+    parser.add_argument("--s15-annotation", default="Stimulus/S 15", help="S15 annotation used for task baselines.")
     parser.add_argument("--block-start-annotation", default="Stimulus/S 10", help="Task S10 annotation used as fixed and sequence block start.")
     parser.add_argument("--epoch-duration", type=float, default=5.0, help="Epoch duration in seconds for fixed epochs.")
     return parser.parse_args()
