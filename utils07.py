@@ -94,6 +94,10 @@ def roi_epoch_paths(args: argparse.Namespace, kind: str) -> list[Path]: # builds
     )
     tag = epoch_base_tag(args)
 
+    simple_path = directory / f"{tag}_{kind}-epo.fif"
+    if simple_path.exists():
+        return [simple_path]
+
     if args.mode in ("surface", "volume"):
         return [directory / f"{tag}_labels_{kind}-epo.fif"]
 

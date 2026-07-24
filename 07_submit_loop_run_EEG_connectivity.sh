@@ -76,7 +76,11 @@ do
                 done
             else
                 OUTPUT_FILE="$CONNECTIVITY_DIR/${BASE_TAG}_connectivity_summary.csv"
-                if [ "$MODE" = "mixed" ]; then
+                SIMPLE_INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_rs_s15_epochs-epo.fif"
+                if [ -f "$SIMPLE_INPUT_FILE" ]; then
+                    INPUT_FILE="$SIMPLE_INPUT_FILE"
+                    INPUT_FILE_2=""
+                elif [ "$MODE" = "mixed" ]; then
                     INPUT_FILE="$EPOCH_DIR/${BASE_TAG}_surface_labels_rs_s15_epochs-epo.fif"
                     INPUT_FILE_2="$EPOCH_DIR/${BASE_TAG}_volume_labels_rs_s15_epochs-epo.fif"
                 else
