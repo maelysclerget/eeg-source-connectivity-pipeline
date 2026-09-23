@@ -22,7 +22,9 @@ data/
 derivatives/
 results/
 outputs/
-figures/
+/figures/
+plots/*_plots/
+plots/*ROI_time_courses/
 
 # EEG, MRI and scientific data
 *.fif

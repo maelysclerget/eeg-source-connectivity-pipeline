@@ -1,14 +1,14 @@
 #!/bin/bash
 # Author Stavriani Skarvelaki / Maelys Clerget
 
-# Debug submitter for one inverse-only job set.
+# Debug submitter for one subject/session forward-solution job set.
 
 DATA_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_inverse_solution_only.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code/06_run_EEG_inverse_solution_only.sh"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_forward_solution.txt"
+RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/06_run_EEG_forward_solution.sh"
 
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"
@@ -16,22 +16,14 @@ mkdir -p "$LOG_DIR"
 # ---- ONE TEST SUBJECT ----
 SUB="41Y01"
 SES="1"
-TASK="RSpre"
 MODES=("surface" "volume" "mixed")
-METHOD="MNE"
-COV_DURATION="20.0"
 
 for MODE in "${MODES[@]}"
 do
-    MORPH_TO=""
-    if [ "$MODE" = "surface" ]; then
-        MORPH_TO="fsaverage"
-    fi
-
-    echo "$SUB $SES $TASK $MODE $METHOD $COV_DURATION $MORPH_TO" >> "$PARAM_LIST"
+    echo "$SUB $SES $MODE" >> "$PARAM_LIST"
 done
 
-echo "Added test inverse-only subject:"
+echo "Added test forward-solution subject:"
 cat "$PARAM_LIST"
 
 NUM_FILES=$(wc -l < "$PARAM_LIST")

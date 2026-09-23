@@ -28,7 +28,7 @@ cd /work/uphummel/studies/tTIS-EEG/code/Maelys/
 # 4. DeteMODULE rmine which file to process
 # $SLURM_ARRAY_TASK_ID is the index (1, 2, 3...)
 # sed -n "${p}p" prints just that line from the file list
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_bem.txt"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_bem.txt"
 CURRENT_FILE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$PARAM_LIST")
 
 # 5. Check if we got a file

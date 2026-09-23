@@ -1,15 +1,16 @@
 #!/bin/bash
 # Author Stavriani Skarvelaki / Maelys Clerget
 
-#SBATCH --job-name=eeg_epoch_labels
-#SBATCH --time=02:00:00
+# Resources chosen to optimize memory usage while respecting the cluster rule:
+#SBATCH --job-name=eeg_inverse_only
+#SBATCH --time=06:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=64G
-#SBATCH --cpus-per-task=10
+#SBATCH --mem=192G
+#SBATCH --cpus-per-task=29
 #SBATCH --error=/work/uphummel/studies/tTIS-EEG/logs/%x_%A_%a.err
 #SBATCH --output=/work/uphummel/studies/tTIS-EEG/logs/%x_%A_%a.out
 
-# Requested memory should stay <= requested CPUs x 7000 MB.
+# Requested memory should stay <= requested CPUs x 7000 MB. 
 
 umask 0002
 
@@ -18,7 +19,7 @@ module load gcc python
 
 cd /work/uphummel/studies/tTIS-EEG/code/Maelys/
 
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_epoch_label_time_courses.txt"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_inverse_solution_only.txt"
 CURRENT_FILE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$PARAM_LIST")
 
 if [ -z "$CURRENT_FILE" ]; then
@@ -26,38 +27,23 @@ if [ -z "$CURRENT_FILE" ]; then
     exit 1
 fi
 
-read -r SUB SES TASK MODE METHOD COV_LABEL LABEL_KIND <<< "$CURRENT_FILE"
+read -r SUB SES TASK MODE METHOD COV_DURATION MORPH_TO <<< "$CURRENT_FILE"
 
 if [ -z "$MODE" ]; then
     MODE="surface"
 fi
 
 if [ -z "$METHOD" ]; then
-    METHOD="MNE"
+    METHOD="sLORETA"
 fi
 
-if [ -z "$COV_LABEL" ]; then
-    COV_LABEL="15"
+if [ -z "$COV_DURATION" ]; then
+    COV_DURATION="20.0"
 fi
 
-if [ -z "$LABEL_KIND" ]; then
-    LABEL_KIND="labels"
-fi
-
-DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
-BASE_TAG="${SUB}_ses${SES}_task-${TASK}_src-${MODE}_method-${METHOD}"
-
-if [ "$TASK" = "task" ]; then
-    COV_TAG="$COV_LABEL"
-    if [[ "$COV_TAG" != s* ]]; then
-        COV_TAG="s${COV_TAG}"
-    fi
-
-    LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/inverse_solution/$MODE/$METHOD/cov$COV_TAG"
-    LABELS_FIF="$LABELS_DIR/${BASE_TAG}_cov-${COV_TAG}_${LABEL_KIND}.fif"
-else
-    LABELS_DIR="$DERIV_ROOT/sub-$SUB/ses-$SES/$TASK/inverse_solution/$MODE/$METHOD"
-    LABELS_FIF="$LABELS_DIR/${BASE_TAG}_${LABEL_KIND}.fif"
+MORPH_ARGS=""
+if [ "$MORPH_TO" = "fsaverage" ]; then
+    MORPH_ARGS="--morph-to-fsaverage"
 fi
 
 echo "SUB = '$SUB'"
@@ -65,15 +51,9 @@ echo "SES = '$SES'"
 echo "TASK = '$TASK'"
 echo "MODE = '$MODE'"
 echo "METHOD = '$METHOD'"
-echo "COV_LABEL = '$COV_LABEL'"
-echo "LABEL_KIND = '$LABEL_KIND'"
-echo "LABELS_FIF = '$LABELS_FIF'"
-echo "Processing ROI label epochs for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD label-$LABEL_KIND"
-
-if [ ! -f "$LABELS_FIF" ]; then
-    echo "Error: labels FIF not found: $LABELS_FIF"
-    exit 1
-fi
+echo "COV_DURATION = '$COV_DURATION'"
+echo "MORPH_TO = '$MORPH_TO'"
+echo "Processing inverse solution for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD cov-${COV_DURATION}s"
 
 MNE_FS_IMG="/work/uphummel/shared/software/containers/mne_freesurfer/mne_freesurfer_8.1.sif"
 FS_LICENSE="/work/uphummel/shared/software/containers/license.txt"
@@ -94,12 +74,12 @@ apptainer exec \
         echo "FREESURFER_HOME=$FREESURFER_HOME"
         echo "SUBJECTS_DIR=$SUBJECTS_DIR"
 
-        python 08_EEG_epoch_label_time_courses.py \
-            --labels-fif "'"$LABELS_FIF"'" \
+        python 06_EEG_inverse_solution_only.py \
             --subject "'"$SUB"'" \
             --session "'"$SES"'" \
             --task "'"$TASK"'" \
             --mode "'"$MODE"'" \
             --method "'"$METHOD"'" \
-            --cov-label "'"$COV_LABEL"'"
+            --cov-duration "'"$COV_DURATION"'" \
+            '"$MORPH_ARGS"'
     '

@@ -16,7 +16,7 @@ module load gcc python
 
 cd /work/uphummel/studies/tTIS-EEG/code/Maelys/
 
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_forward_solution.txt"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_forward_solution.txt"
 CURRENT_FILE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$PARAM_LIST")
 
 if [ -z "$CURRENT_FILE" ]; then

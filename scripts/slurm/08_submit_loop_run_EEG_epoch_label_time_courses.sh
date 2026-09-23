@@ -9,8 +9,8 @@
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_epoch_label_time_courses.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code/08_run_EEG_epoch_label_time_courses.sh"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_epoch_label_time_courses.txt"
+RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/08_run_EEG_epoch_label_time_courses.sh"
 
 # Source space modes and inverse methods to epoch.
 MODES=("surface" "volume" "mixed")

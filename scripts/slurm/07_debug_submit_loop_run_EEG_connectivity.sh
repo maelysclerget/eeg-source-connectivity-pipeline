@@ -2,8 +2,8 @@
 # Author Stavriani Skarvelaki / Maelys Clerget
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_connectivity.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code/07_run_EEG_connectivity.sh"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_connectivity.txt"
+RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/07_run_EEG_connectivity.sh"
 
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"

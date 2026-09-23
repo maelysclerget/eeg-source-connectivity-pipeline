@@ -4,8 +4,8 @@
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/files_for_forward_solution.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code/06_run_EEG_forward_solution.sh"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_forward_solution.txt"
+RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/06_run_EEG_forward_solution.sh"
 
 MODES=("surface" "volume" "mixed")
 
