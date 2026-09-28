@@ -9,7 +9,7 @@ DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
 PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_connectivity.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/07_run_EEG_connectivity.sh"
+RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/09_run_EEG_connectivity.sh"
 
 # Choose source space and inverse methods here.
 MODES=("surface" "volume" "mixed")

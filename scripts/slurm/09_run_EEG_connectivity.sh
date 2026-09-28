@@ -1,16 +1,15 @@
 #!/bin/bash
 # Author Stavriani Skarvelaki / Maelys Clerget
 
-# Resources chosen to optimize memory usage while respecting the cluster rule:
-#SBATCH --job-name=eeg_inverse_only
-#SBATCH --time=06:00:00
+#SBATCH --job-name=eeg_connectivity
+#SBATCH --time=03:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=192G
-#SBATCH --cpus-per-task=29
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=10
 #SBATCH --error=/work/uphummel/studies/tTIS-EEG/logs/%x_%A_%a.err
 #SBATCH --output=/work/uphummel/studies/tTIS-EEG/logs/%x_%A_%a.out
 
-# Requested memory should stay <= requested CPUs x 7000 MB. 
+# Requested memory should stay <= requested CPUs x 7000 MB.
 
 umask 0002
 
@@ -19,7 +18,7 @@ module load gcc python
 
 cd /work/uphummel/studies/tTIS-EEG/code/Maelys/
 
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_inverse_solution_only.txt"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_connectivity.txt"
 CURRENT_FILE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$PARAM_LIST")
 
 if [ -z "$CURRENT_FILE" ]; then
@@ -27,23 +26,18 @@ if [ -z "$CURRENT_FILE" ]; then
     exit 1
 fi
 
-read -r SUB SES TASK MODE METHOD COV_DURATION MORPH_TO <<< "$CURRENT_FILE"
+read -r SUB SES TASK MODE METHOD BASELINE_KIND <<< "$CURRENT_FILE"
 
 if [ -z "$MODE" ]; then
     MODE="surface"
 fi
 
 if [ -z "$METHOD" ]; then
-    METHOD="sLORETA"
+    METHOD="MNE"
 fi
 
-if [ -z "$COV_DURATION" ]; then
-    COV_DURATION="20.0"
-fi
-
-MORPH_ARGS=""
-if [ "$MORPH_TO" = "fsaverage" ]; then
-    MORPH_ARGS="--morph-to-fsaverage"
+if [ -z "$BASELINE_KIND" ]; then
+    BASELINE_KIND="baseline_stim"
 fi
 
 echo "SUB = '$SUB'"
@@ -51,9 +45,8 @@ echo "SES = '$SES'"
 echo "TASK = '$TASK'"
 echo "MODE = '$MODE'"
 echo "METHOD = '$METHOD'"
-echo "COV_DURATION = '$COV_DURATION'"
-echo "MORPH_TO = '$MORPH_TO'"
-echo "Processing inverse solution for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD cov-${COV_DURATION}s"
+echo "BASELINE_KIND = '$BASELINE_KIND'"
+echo "Processing source EEG connectivity for sub-$SUB ses-$SES task-$TASK mode-$MODE method-$METHOD"
 
 MNE_FS_IMG="/work/uphummel/shared/software/containers/mne_freesurfer/mne_freesurfer_8.1.sif"
 FS_LICENSE="/work/uphummel/shared/software/containers/license.txt"
@@ -74,12 +67,11 @@ apptainer exec \
         echo "FREESURFER_HOME=$FREESURFER_HOME"
         echo "SUBJECTS_DIR=$SUBJECTS_DIR"
 
-        python 06_EEG_inverse_solution_only.py \
+        python 09_EEG_connectivity.py \
             --subject "'"$SUB"'" \
             --session "'"$SES"'" \
             --task "'"$TASK"'" \
             --mode "'"$MODE"'" \
             --method "'"$METHOD"'" \
-            --cov-duration "'"$COV_DURATION"'" \
-            '"$MORPH_ARGS"'
+            --baseline-kind "'"$BASELINE_KIND"'"
     '

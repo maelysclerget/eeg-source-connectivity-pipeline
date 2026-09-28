@@ -6,9 +6,9 @@ This repository is organized so the main analysis stages remain easy to find whi
 
 - `05_EEG_montage_BEM.py`: creates personalized EEG montage files and BEM assets.
 - `06_EEG_forward_solution.py`: builds forward solutions for source reconstruction.
-- `06_EEG_inverse_solution_only.py`: computes inverse solutions and ROI time courses.
+- `07_EEG_inverse_solution.py`: computes inverse solutions and ROI time courses.
 - `08_EEG_epoch_label_time_courses.py`: epochs ROI label time courses.
-- `07_EEG_connectivity.py`: computes source-space ROI connectivity.
+- `09_EEG_connectivity.py`: computes source-space ROI connectivity.
 
 ## Supporting Folders
 

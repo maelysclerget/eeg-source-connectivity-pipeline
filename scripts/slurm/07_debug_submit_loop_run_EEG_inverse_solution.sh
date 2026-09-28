@@ -7,8 +7,8 @@ DATA_ROOT="/work/uphummel/studies/tTIS-EEG/data/raw/EEG"
 DERIV_ROOT="/work/uphummel/studies/tTIS-EEG/derivatives/EEG"
 
 LOG_DIR="/work/uphummel/studies/tTIS-EEG/logs"
-PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_inverse_solution_only.txt"
-RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/06_run_EEG_inverse_solution_only.sh"
+PARAM_LIST="/work/uphummel/studies/tTIS-EEG/code/Maelys/config/files_for_inverse_solution.txt"
+RUN_SCRIPT="/home/clerget/Scripts/code/scripts/slurm/07_run_EEG_inverse_solution.sh"
 
 mkdir -p "$LOG_DIR"
 > "$PARAM_LIST"

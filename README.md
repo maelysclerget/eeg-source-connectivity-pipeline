@@ -1,8 +1,6 @@
 # EEG Source Connectivity Pipeline
 
-Python and SLURM scripts for EEG source reconstruction and ROI-level source-space connectivity analysis.
-
-The pipeline prepares individualized EEG montages, builds BEM and forward models, computes inverse source estimates, extracts ROI time courses, epochs those time courses, and estimates ROI-to-ROI connectivity across canonical frequency bands.
+Python/MNE pipeline for individualized EEG source reconstruction and ROI-level functional connectivity analysis. The pipeline was developed for the tTIS-EEG project and supports automated processing of multiple participants, sessions, source-space configurations, and inverse methods in an HPC/SLURM environment.
 
 ## Repository Layout
 
@@ -10,8 +8,8 @@ The pipeline prepares individualized EEG montages, builds BEM and forward models
 .
 ├── 05_EEG_montage_BEM.py                 # Personalized montage, scalp surfaces, BEM preparation
 ├── 06_EEG_forward_solution.py            # Surface/volume/mixed forward solutions
-├── 06_EEG_inverse_solution_only.py       # Inverse solutions and ROI time courses
-├── 07_EEG_connectivity.py                # ROI-to-ROI connectivity matrices and plots
+├── 07_EEG_inverse_solution.py       # Inverse solutions and ROI time courses
+├── 09_EEG_connectivity.py                # ROI-to-ROI connectivity matrices and plots
 ├── 08_EEG_epoch_label_time_courses.py    # Epoch ROI time courses before connectivity
 ├── ICA/                                  # ICA and preprocessing utilities
 ├── config/                               # Input lists for batch/HPC runs
@@ -40,8 +38,8 @@ The pipeline prepares individualized EEG montages, builds BEM and forward models
    - Supports `surface`, `volume`, and `mixed` source spaces.
 
 4. **Compute inverse solution and ROI time courses**
-   - Python: `06_EEG_inverse_solution_only.py`
-   - SLURM: `scripts/slurm/06_run_EEG_inverse_solution_only.sh`
+   - Python: `07_EEG_inverse_solution.py`
+   - SLURM: `scripts/slurm/07_run_EEG_inverse_solution.sh`
    - Supports inverse methods such as MNE, sLORETA, and eLORETA.
 
 5. **Epoch ROI label time courses**
@@ -50,8 +48,8 @@ The pipeline prepares individualized EEG montages, builds BEM and forward models
    - Creates task and resting-state epoch files from continuous ROI time courses.
 
 6. **Compute source connectivity**
-   - Python: `07_EEG_connectivity.py`
-   - SLURM: `scripts/slurm/07_run_EEG_connectivity.sh`
+   - Python: `09_EEG_connectivity.py`
+   - SLURM: `scripts/slurm/09_run_EEG_connectivity.sh`
    - Saves ROI connectivity matrices, heatmaps, circle plots, and summary CSVs.
 
 ## Requirements
