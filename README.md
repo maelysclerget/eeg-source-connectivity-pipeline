@@ -1,5 +1,7 @@
 # EEG Source Connectivity Pipeline
 
+I, Maëlys Clerget, developed the source-analysis stages of this pipeline, from personalized EEG montage and BEM preparation through forward and inverse modeling, ROI time-course epoching, and source-connectivity analysis, together with the corresponding SLURM workflows.
+
 Python/MNE pipeline for individualized EEG source reconstruction and ROI-level functional connectivity analysis. The pipeline was developed for the tTIS-EEG project and supports automated processing of multiple participants, sessions, source-space configurations, and inverse methods in an HPC/SLURM environment.
 
 ## Repository Layout
